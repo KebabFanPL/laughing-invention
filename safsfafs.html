@@ -1,0 +1,5734 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#07121d" />
+    <meta
+      name="description"
+      content="Dashllion is a free daily Geometry Dash trivia challenge. Guess rare answers to seven questions and compare scores with other players."
+    />
+    <link rel="canonical" href="https://dashllion.com/" />
+    <!-- Google AdSense site ownership verification. This does not render ads by itself. -->
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9956316454484649"
+      crossorigin="anonymous"
+    ></script>
+    <title>Dashllion · GD Krillion</title>
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+    <meta property="og:title" content="Dashllion · GD Krillion" />
+    <!-- Public daily and archived challenge. Completed runs use the once-per-player score API. -->
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Mono:wght@400;500&family=Silkscreen:wght@400;700&display=swap");
+      :root {
+        --void: #07121d;
+        --ink: #effcff;
+        --mute: #9fb7bd;
+        --cyan: #73f3f0;
+        --lime: #daff71;
+        --peach: #ff8c9e;
+        --pink: #ff619f;
+        --line: #aac9d13b;
+        --font-label: "DM Mono", Consolas, monospace;
+        --font-display: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+        --font-pixel: "Silkscreen", "Courier New", monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--void);
+        color: var(--ink);
+        font: 14px/1.55 var(--font-label);
+        overflow-x: hidden;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      a {
+        color: inherit;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--lime);
+        outline-offset: 5px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      #world {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        z-index: 0;
+        pointer-events: none;
+      }
+      .scanlines {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 3;
+        opacity: 0.18;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent 0px,
+          transparent 3px,
+          #00101a8a 4px,
+          transparent 5px
+        );
+        mix-blend-mode: multiply;
+      }
+      .noise {
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background: radial-gradient(
+          ellipse at 50% 43%,
+          transparent 15%,
+          #02070e6e 99%
+        );
+      }
+      /* A translucent warmth across the entire interface, never a modal or UI layer.
+   The gold answer triggers it; the next round gently fades it back to blue. */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+        background: radial-gradient(
+          ellipse at 57% 42%,
+          #ffd9811c 0%,
+          #e6a4401d 49%,
+          #ad651b38 100%
+        );
+        mix-blend-mode: screen;
+        opacity: 0;
+        transition: opacity 0.95s ease;
+      }
+      body.golden-round::after {
+        opacity: 0.95;
+      }
+      .run-score,
+      .round-identifier span,
+      .distance-pylon .upper,
+      .input-label,
+      .typebar,
+      .typebar button,
+      .time-rail-fill,
+      .mark-glyph {
+        transition:
+          color 0.85s ease,
+          border-color 0.85s ease,
+          background-color 0.85s ease,
+          box-shadow 0.85s ease;
+      }
+      body.golden-round .run-score,
+      body.golden-round .round-identifier span,
+      body.golden-round .distance-pylon .upper,
+      body.golden-round .input-label {
+        color: #ffe09a;
+      }
+      body.golden-round .typebar {
+        border-bottom-color: #f5bb58;
+        box-shadow: 0 9px 38px #a65c193d;
+      }
+      body.golden-round .typebar button {
+        background: #ffcf76;
+        color: #38220a;
+      }
+      body.golden-round .time-rail-fill {
+        background: #ffcc69 !important;
+      }
+      body.golden-round .mark-glyph {
+        color: #ffd17c;
+        border-color: #ffd17c;
+        box-shadow: 4px 4px 0 #ffad6780;
+      }
+      .ui {
+        position: relative;
+        z-index: 4;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+      }
+      .site-credit {
+        position: absolute;
+        right: 0;
+        top: 26px;
+        max-width: 100%;
+        padding: 0;
+        text-align: right;
+        color: #a4b8c4;
+        font: 10px/1.5 var(--font-label);
+      }
+      .site-credit strong {
+        font-weight: 800;
+        color: #e7f2f7;
+      }
+      /* Visible public information links for players and Google site reviewers. */
+      .site-links {
+        position: absolute;
+        left: 0;
+        top: 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        font: 700 10px/1.5 var(--font-label);
+      }
+      .site-links a {
+        color: #b7d5d8;
+        text-underline-offset: 3px;
+        text-decoration: underline;
+        text-decoration-color: #77c8d675;
+      }
+      .site-links a:hover,
+      .site-links a:focus-visible {
+        color: var(--lime);
+      }
+      @media (max-width: 1000px) {
+        .route-bar {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 9px;
+          padding: 13px 0 17px;
+        }
+        .route-index {
+          order: 0;
+        }
+        .site-links {
+          position: static;
+          order: 1;
+          justify-content: center;
+          text-align: center;
+        }
+        .site-credit {
+          position: static;
+          order: 2;
+          text-align: center;
+        }
+      }
+
+      /* Feedback popup restores the original edit-in-place functionality. */
+      .feedback-trigger {
+        appearance: none;
+        background: #102536b8;
+        border: 1px solid #72cfda82;
+        color: #bceef2;
+        border-radius: 5px;
+        padding: 10px 14px;
+        font: 700 11px/1.25 var(--font-label);
+        letter-spacing: 0.35px;
+        white-space: nowrap;
+      }
+      .feedback-trigger:hover {
+        color: var(--lime);
+        border-color: var(--lime);
+        background: #163140;
+      }
+      .feedback-dialog {
+        width: min(510px, calc(100% - 24px));
+        max-height: 85dvh;
+        overflow: auto;
+        padding: 24px;
+        border: 1px solid #70b9cd7a;
+        border-radius: 12px;
+        background: #0d1a2b;
+        color: var(--ink);
+        box-shadow: 0 22px 75px #000b;
+      }
+      .feedback-dialog::backdrop {
+        background: #010811c9;
+      }
+      .feedback-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .feedback-header h2 {
+        margin: 0;
+        font: 800 25px/1.2 var(--font-display);
+        letter-spacing: 0.8px;
+        color: var(--ink);
+      }
+      .feedback-close {
+        flex: none;
+        width: 35px;
+        height: 35px;
+        border: 1px solid #5a7b90;
+        border-radius: 5px;
+        background: #17283d;
+        color: #ddf5f7;
+        font-size: 23px;
+        line-height: 1;
+      }
+      .feedback-close:hover {
+        border-color: var(--lime);
+        color: var(--lime);
+      }
+      .feedback-dialog p {
+        font: 13px/1.6 var(--font-label);
+        color: #b8cdd6;
+        margin: 15px 0 6px;
+      }
+      .feedback-dialog .feedback-note {
+        font-size: 11px;
+        color: #93b4bf;
+      }
+      .feedback-dialog label {
+        display: block;
+        margin: 18px 0 8px;
+        font: 700 11px var(--font-label);
+        color: var(--cyan);
+        letter-spacing: 0.5px;
+      }
+      .feedback-dialog textarea {
+        display: block;
+        resize: vertical;
+        width: 100%;
+        min-height: 142px;
+        border: 1px solid #4b697f;
+        border-radius: 7px;
+        background: #091421;
+        color: var(--ink);
+        padding: 13px;
+        font: 13px/1.55 var(--font-label);
+        outline: none;
+      }
+      .feedback-dialog textarea:focus {
+        border-color: var(--cyan);
+        box-shadow: 0 0 0 2px #73f3f022;
+      }
+      .feedback-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: start;
+        margin: 9px 0 16px;
+        font: 11px/1.5 var(--font-label);
+        color: #afc6d0;
+      }
+      .feedback-meta span:last-child {
+        flex: none;
+        white-space: nowrap;
+      }
+      .feedback-submit {
+        display: block;
+        width: 100%;
+        min-height: 45px;
+        border: 1px solid var(--lime);
+        border-radius: 5px;
+        background: var(--lime);
+        color: #101a19;
+        font: 800 16px var(--font-display);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .feedback-submit:hover:not(:disabled) {
+        background: #edffa7;
+      }
+      .feedback-submit:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      @media (max-width: 560px) {
+        .nav {
+          gap: 10px;
+        }
+        .mark {
+          gap: 9px;
+        }
+        .feedback-trigger {
+          font-size: 9px;
+          padding: 9px 8px;
+          max-width: 155px;
+          white-space: normal;
+          text-align: center;
+        }
+        .feedback-dialog {
+          padding: 18px;
+        }
+      }
+
+      .nav {
+        height: 75px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px clamp(18px, 4vw, 76px);
+        border-bottom: 1px solid #c6f4ee23;
+        background: linear-gradient(180deg, #03121bcc, #04172215);
+        gap: 20px;
+      }
+      .mark {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        text-decoration: none;
+      }
+      .mark-glyph {
+        width: 31px;
+        height: 31px;
+        display: grid;
+        place-items: center;
+        border: 2px solid var(--lime);
+        color: var(--lime);
+        font: 700 19px/1 var(--font-pixel);
+        box-shadow: 4px 4px 0 #ff619f80;
+        transform: rotate(-5deg);
+      }
+      .mark-text {
+        display: flex;
+        flex-direction: column;
+      }
+      .mark-text strong {
+        font: 800 23px/1 var(--font-display);
+        letter-spacing: 2.4px;
+      }
+      .mark-text small {
+        font: 10px var(--font-label);
+        letter-spacing: 2.5px;
+        color: var(--mute);
+        margin-top: 4px;
+      }
+      .nav-right {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+      }
+      .nav-return {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font: 11px var(--font-label);
+        text-decoration: none;
+        border-bottom: 1px solid #b4d2d35e;
+        padding: 5px 0;
+        color: #ccdee1;
+      }
+      .nav-return:hover {
+        color: var(--lime);
+        border-color: var(--lime);
+      }
+      .stage {
+        width: min(1250px, 100%);
+        margin: 0 auto;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 0 clamp(18px, 5vw, 80px);
+      }
+      .stage:has(#screen-end:not(.hidden)) {
+        width: min(1200px, 100%);
+      }
+      .screen {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100dvh - 134px);
+      }
+      .home-hero {
+        position: relative;
+        max-width: 1050px;
+        margin-top: clamp(45px, 8vh, 100px);
+      }
+      .home-hero h1 {
+        font: 900 clamp(60px, 9.5vw, 133px)/0.87 var(--font-display);
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: -1.8px;
+        text-shadow: 0 8px 30px #041c2e64;
+      }
+      .home-hero h1 span {
+        display: block;
+        color: var(--lime);
+        margin-left: clamp(0px, 3vw, 45px);
+        -webkit-text-stroke: 1px #e7ffad;
+        position: relative;
+      }
+      .home-hero h1 span::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 100%;
+        width: clamp(140px, 25vw, 335px);
+        border-bottom: 4px solid var(--pink);
+        transform: skewX(-32deg);
+      }
+      .home-sub {
+        font:
+          500 clamp(16px, 1.75vw, 22px)/1.45 system-ui,
+          sans-serif;
+        letter-spacing: 0.05px;
+        max-width: 690px;
+        color: #e1eef1;
+        text-transform: none;
+        margin: 28px 0 0;
+      }
+      .home-bottom {
+        margin-top: auto;
+        max-width: 730px;
+        padding-top: clamp(70px, 10vh, 110px);
+        padding-bottom: clamp(30px, 5vh, 60px);
+      }
+      .primary {
+        appearance: none;
+        border: 2px solid var(--lime);
+        background: var(--lime);
+        color: #101a19;
+        font: 900 clamp(20px, 3vw, 29px)/1 var(--font-display);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 25px;
+        padding: 19px 28px;
+        min-height: 63px;
+        box-shadow: 7px 7px 0 #ff619f6d;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+      }
+      .primary:hover {
+        transform: translate(3px, 3px);
+        box-shadow: 4px 4px 0 #ff619f6d;
+      }
+      .primary:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .primary .symbol {
+        font-family: var(--font-pixel);
+        font-size: 21px;
+      }
+      .home-bottom .primary {
+        width: min(100%, 550px);
+        justify-content: space-between;
+      }
+      .home-actions {
+        display: flex;
+        align-items: stretch;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .home-actions #start {
+        flex: 1 1 310px;
+        min-width: 0;
+      }
+      .home-actions #home-archive-toggle {
+        flex: 0 1 auto;
+        min-width: 177px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+      }
+      .home-actions #home-archive-toggle.hidden {
+        display: none;
+      }
+      .home-run-status {
+        color: #bbd9dc;
+        font: 12px/1.5 var(--font-label);
+        margin: 16px 0 0;
+      }
+      .home-run-status:empty {
+        display: none;
+      }
+      .archive-home-label {
+        font: 700 11px var(--font-label);
+        color: #b8e7ed;
+        letter-spacing: 1.4px;
+        margin: 0 0 12px;
+      }
+      .archive-home-label:empty {
+        display: none;
+      }
+      .home-bottom .archive-panel {
+        margin-top: 18px;
+        max-width: 700px;
+      }
+      @media (max-width: 620px) {
+        .home-actions #start,
+        .home-actions #home-archive-toggle {
+          flex: 1 1 100%;
+          width: 100%;
+        }
+        .home-actions {
+          gap: 10px;
+        }
+        .home-actions #start {
+          min-height: 58px;
+        }
+      }
+      .screen-play {
+        padding-top: clamp(18px, 4vh, 46px);
+      }
+      .question-line {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid #b6dadf3d;
+        padding-bottom: 13px;
+      }
+      .round-stats {
+        display: flex;
+        align-items: baseline;
+        gap: clamp(12px, 3vw, 27px);
+        min-width: 0;
+      }
+      .round-identifier {
+        font: 800 22px/1 var(--font-display);
+        letter-spacing: 1px;
+        white-space: nowrap;
+      }
+      .round-identifier span {
+        color: var(--lime);
+        font-size: 32px;
+      }
+      .run-score {
+        border-left: 1px solid #8ac5c65c;
+        padding-left: clamp(12px, 2vw, 24px);
+        font: 800 25px/1 var(--font-display);
+        letter-spacing: 0.7px;
+        color: var(--cyan);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .run-score small {
+        font: 600 20px/1 var(--font-display);
+        color: #bfd4d7;
+      }
+      .timer-under-input {
+        margin-top: 8px;
+      }
+      .time-rail {
+        height: 3px;
+        background: #7db8c64e;
+        width: 100%;
+      }
+      .time-rail-fill {
+        height: 100%;
+        background: var(--lime);
+        width: 100%;
+        transition: width 0.07s linear;
+      }
+      .time-readout {
+        display: flex;
+        align-items: baseline;
+        gap: 7px;
+        margin: 5px 0 0 22px;
+      }
+      .time-readout strong {
+        font: 900 clamp(25px, 2.8vw, 30px)/1 var(--font-display);
+        letter-spacing: 1px;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+      .time-readout small {
+        font-size: 11px;
+        color: var(--mute);
+      }
+      .question-block {
+        padding: 20px 0 5px;
+        max-width: 1100px;
+      }
+      .question-block h2 {
+        font: 900 clamp(35px, 6vw, 75px)/0.98 var(--font-display);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        max-width: 950px;
+        margin: 0 0 13px;
+        text-wrap: balance;
+      }
+      .question-hint {
+        font-size: clamp(17px, 1.8vw, 21px);
+        font-weight: 550;
+        line-height: 1.5;
+        color: #d4eef1;
+        letter-spacing: 0.1px;
+        max-width: 860px;
+        margin-top: 8px;
+      }
+      .question-hint:empty {
+        display: none;
+      }
+      .game-expanse {
+        flex: 1;
+        min-height: clamp(140px, 25vh, 390px);
+        position: relative;
+      }
+      .distance-pylon {
+        position: absolute;
+        bottom: 24px;
+        right: 0;
+        text-align: right;
+        color: #cfedf1;
+        text-shadow: 0 2px 8px #051420;
+      }
+      .distance-pylon .upper {
+        font-size: 10px;
+        color: var(--cyan);
+        letter-spacing: 2px;
+      }
+      .distance-pylon strong {
+        display: block;
+        font: 900 clamp(42px, 6vw, 70px)/1 var(--font-display);
+        font-variant-numeric: tabular-nums;
+      }
+      .distance-pylon strong small {
+        font-size: 20px;
+        color: var(--mute);
+        margin-left: 5px;
+      }
+      .play-controls {
+        margin: 0 0 12px;
+        max-width: 1020px;
+        align-self: center;
+        width: 100%;
+      }
+      .input-label {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        font-size: 10px;
+        letter-spacing: 2px;
+        color: var(--cyan);
+        margin-bottom: 9px;
+      }
+      .typebar {
+        display: flex;
+        gap: 0;
+        min-height: 67px;
+        border-bottom: 3px solid var(--cyan);
+        background: linear-gradient(90deg, #061b2ae8, #091d29dd);
+        box-shadow: 0 9px 35px #00131f90;
+      }
+      .typebar input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        color: white;
+        font: 800 clamp(18px, 3.5vw, 27px) var(--font-display);
+        letter-spacing: 1px;
+        text-transform: none;
+        padding: 15px 22px;
+        outline: none;
+      }
+      .typebar input::placeholder {
+        color: #7ca9ae;
+      }
+      .typebar button {
+        border: 0;
+        border-left: 1px solid #83c7d580;
+        background: var(--cyan);
+        color: #081920;
+        font: 800 19px var(--font-display);
+        letter-spacing: 1.5px;
+        min-width: 177px;
+        padding: 10px 16px;
+      }
+      .typebar button:hover {
+        background: var(--lime);
+      }
+      .typebar button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .answer-entry {
+        position: relative;
+        isolation: isolate;
+      }
+      .answer-feedback {
+        position: absolute;
+        z-index: 6;
+        left: 8px;
+        bottom: calc(100% + 13px);
+        max-width: min(100%, 720px);
+        width: max-content;
+        padding: 12px 21px;
+        min-height: 43px;
+        border: 1px solid #85c1ce6b;
+        border-radius: 999px;
+        background: #071b2bea;
+        box-shadow: 0 9px 26px #000a;
+        backdrop-filter: blur(8px);
+        color: #d5e7ec;
+        font: 500 clamp(13px, 1.6vw, 16px)/1.35 var(--font-label);
+        white-space: normal;
+        overflow-wrap: anywhere;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(7px) scale(0.98);
+        transition:
+          opacity 0.18s ease,
+          transform 0.18s ease,
+          visibility 0.18s;
+        pointer-events: none;
+      }
+      .answer-feedback.shown {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+      }
+      .answer-feedback.wrong {
+        color: #ff7895;
+        border-color: #f479927d;
+      }
+      .answer-feedback.autocorrect {
+        border-color: #7ed3f188;
+      }
+      .feedback-label,
+      .feedback-correct {
+        color: #80d9fa;
+        font-weight: 700;
+      }
+      .feedback-wrong {
+        color: #abb9c5;
+      }
+      .feedback-arrow {
+        color: #d1dce4;
+        margin: 0 0.24em;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .answer-feedback {
+          transition: none;
+          transform: none;
+        }
+        body::after {
+          transition: none;
+        }
+        .run-score,
+        .round-identifier span,
+        .distance-pylon .upper,
+        .input-label,
+        .typebar,
+        .typebar button,
+        .time-rail-fill,
+        .mark-glyph {
+          transition: none;
+        }
+      }
+
+      .reveal {
+        position: relative;
+        max-width: 930px;
+        margin: 12px 0 10px;
+        padding: 13px 0 0;
+        border-top: 2px solid #d5f8f043;
+      }
+      .reveal-main {
+        display: flex;
+        gap: 20px;
+        align-items: end;
+        flex-wrap: wrap;
+      }
+      .reveal-name {
+        font: 900 clamp(28px, 5vw, 57px)/1 var(--font-display);
+        text-transform: uppercase;
+      }
+      .reveal-score {
+        font: 900 clamp(32px, 5vw, 54px)/1 var(--font-display);
+        color: var(--lime);
+        font-variant-numeric: tabular-nums;
+      }
+      .reveal-score small {
+        font: 15px var(--font-label);
+      }
+      .reveal-tier {
+        font: 900 clamp(23px, 3.5vw, 34px)/1.12 var(--font-display);
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+        margin-top: 8px;
+        overflow-wrap: anywhere;
+      }
+      .secondary {
+        border: 1px solid var(--cyan);
+        background: #082333bb;
+        color: var(--cyan);
+        font: 700 16px var(--font-display);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 14px 19px;
+        min-width: 170px;
+      }
+      .secondary:hover {
+        border-color: var(--lime);
+        color: var(--lime);
+      }
+      .next-position {
+        display: flex;
+        align-items: end;
+        gap: 20px;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .route-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin: 0 clamp(18px, 4vw, 76px);
+        border-top: 1px solid #b5d8db42;
+        padding: 14px 0 23px;
+        position: relative;
+        z-index: 4;
+      }
+      .route-index {
+        display: flex;
+        gap: 9px;
+        align-items: center;
+      }
+      .route-index span {
+        width: 27px;
+        height: 9px;
+        background: #99b9b85e;
+        transform: skewX(-23deg);
+      }
+      .route-index span.done {
+        background: var(--lime);
+      }
+      .route-index span.active {
+        background: var(--cyan);
+        box-shadow: 0 0 16px #55e7e793;
+      }
+
+      /* Results stage is intentionally much darker than the active game, without
+   dimming its content or introducing a new dashboard of floating panels. */
+      .end-shade {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background: #010610;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      body[data-phase="end"] .end-shade {
+        opacity: 0.76;
+      }
+      .screen-end {
+        padding-top: clamp(22px, 4vh, 42px);
+      }
+      .end-kicker {
+        font-size: 11px;
+        letter-spacing: 2.5px;
+        color: var(--cyan);
+        margin: 0 0 9px;
+      }
+      .end-metrics {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 17px clamp(24px, 4vw, 55px);
+        padding: 6px 0 20px;
+        border-bottom: 1px solid #607a8c5c;
+      }
+      .end-metric small {
+        display: block;
+        color: #9eb6c9;
+        font-size: 10px;
+        letter-spacing: 1.6px;
+        margin-bottom: 6px;
+      }
+      .end-metric strong {
+        font: 900 clamp(45px, 6vw, 72px)/0.96 var(--font-display);
+        letter-spacing: 0.5px;
+        color: white;
+      }
+      .end-metric strong .score-total {
+        font: 600 19px/1 var(--font-display);
+        color: #a9c4ce;
+      }
+      .end-metric strong.cyan {
+        color: var(--cyan);
+      }
+      /* Make the comparison percentile the primary results metric. */
+      .end-metric.percentile {
+        max-width: 100%;
+        min-width: 0;
+      }
+      .end-metric.percentile .percentile-line {
+        display: flex;
+        align-items: baseline;
+        gap: clamp(4px, 0.6vw, 10px);
+        white-space: nowrap;
+      }
+      .end-metric.percentile .percentile-word {
+        font: 900 clamp(24px, 4vw, 52px)/0.98 var(--font-display);
+        letter-spacing: 0;
+        color: #c4e0ed;
+      }
+      .end-metric.percentile strong {
+        display: inline-block;
+        font: 900 clamp(31px, 4.5vw, 61px)/0.95 var(--font-display);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0;
+        color: var(--lime);
+      }
+      @media (max-width: 600px) {
+        .end-metric.percentile .percentile-line {
+          gap: clamp(3px, 1vw, 6px);
+        }
+        .end-metric.percentile .percentile-word {
+          font-size: clamp(17px, 5.1vw, 24px);
+        }
+        .end-metric.percentile strong {
+          font-size: clamp(26px, 7.8vw, 36px);
+        }
+      }
+
+      .end-metric.distance {
+        margin-left: auto;
+        opacity: 0.78;
+      }
+      .end-metric.distance strong {
+        font: 800 clamp(25px, 3.1vw, 37px)/1 var(--font-display);
+        color: #d2dfe6;
+      }
+      .end-metric.distance strong .score-total {
+        font-size: 14px;
+        color: #98afbc;
+      }
+      /* Read-only comparison with the real daily score distribution. */
+      .daily-compare {
+        margin: 19px 0 19px;
+        padding: 17px 19px 15px;
+        border: 1px solid #34485f;
+        border-radius: 12px;
+        background: linear-gradient(140deg, #111f33f0, #0d1728f2);
+      }
+      .compare-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .compare-eyebrow {
+        font: 700 10px var(--font-label);
+        color: var(--cyan);
+        letter-spacing: 1.7px;
+      }
+      .compare-stats {
+        min-height: 33px;
+        padding: 10px 0 5px;
+        font: 12px var(--font-label);
+        color: #b5cfdb;
+      }
+      .compare-stats strong {
+        font: 800 17px/1 var(--font-display);
+        color: var(--cyan);
+        margin: 0 4px;
+        letter-spacing: 0.3px;
+      }
+      .compare-stats .compare-best-label {
+        letter-spacing: 0.7px;
+        font-size: 11px;
+        color: #b5cfdb;
+      }
+      .compare-stats:empty {
+        min-height: 0;
+        padding: 0;
+      }
+      .chart-area {
+        height: 147px;
+        position: relative;
+        border-bottom: 1px solid #6c8093;
+        margin-top: 12px;
+        background: repeating-linear-gradient(
+          to top,
+          transparent 0,
+          transparent calc(25% - 1px),
+          #b8c8e013 25%
+        );
+      }
+      .chart-bars {
+        display: grid;
+        grid-template-columns: repeat(14, minmax(0, 1fr));
+        gap: 4px;
+        height: 100%;
+        align-items: end;
+        padding: 0 2px;
+      }
+      .chart-bar {
+        min-height: 0;
+        border-radius: 3px 3px 0 0;
+        background: linear-gradient(0deg, #356e83, #80bfd7);
+        opacity: 0.88;
+      }
+      .chart-bar.active {
+        background: linear-gradient(0deg, #85aa45, #d4fb77);
+        opacity: 1;
+      }
+      .chart-marker {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 1px;
+        background: #dcff87;
+        box-shadow: 0 0 9px #b2f87990;
+        pointer-events: none;
+      }
+      .chart-marker::after {
+        content: "";
+        position: absolute;
+        bottom: -4px;
+        left: -3px;
+        width: 7px;
+        height: 7px;
+        background: #dcff87;
+        border-radius: 100%;
+      }
+      .chart-marker span {
+        position: absolute;
+        top: 5px;
+        left: 0;
+        transform: translateX(-50%);
+        font: 800 10px var(--font-label);
+        color: #dcffa5;
+        background: #13241e;
+        border: 1px solid #a3e57c96;
+        border-radius: 5px;
+        padding: 4px 7px;
+        white-space: nowrap;
+      }
+      .chart-axis {
+        display: flex;
+        justify-content: space-between;
+        padding-top: 7px;
+        font-size: 10px;
+        color: #95aabd;
+        font-variant-numeric: tabular-nums;
+      }
+      /* Screenshot-inspired result explorer: compact, one column, clearly grouped. */
+      .answer-browse {
+        margin-top: 1px;
+      }
+      .answer-browse > h2 {
+        font: 900 clamp(27px, 4vw, 43px)/1.05 var(--font-display);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin: 14px 0 7px;
+      }
+      .answer-browse > p {
+        font-size: 11px;
+        color: #a7c0cf;
+        margin: 0 0 14px;
+      }
+      .topic {
+        border: 1px solid #364961;
+        border-radius: 11px;
+        background: #101a2bfa;
+        overflow: hidden;
+        margin: 0 0 11px;
+      }
+      .topic summary {
+        list-style: none;
+        cursor: pointer;
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr) 18px;
+        align-items: center;
+        gap: 13px;
+        padding: 14px 15px;
+      }
+      .topic summary::-webkit-details-marker {
+        display: none;
+      }
+      .topic .serial {
+        font: 700 14px var(--font-label);
+        color: #8eb9d3;
+      }
+      .topic .topic-labels {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .topic .topic-name {
+        font: 800 clamp(18px, 2.15vw, 23px)/1.15 var(--font-display);
+        letter-spacing: 0.2px;
+        text-transform: none;
+        overflow-wrap: anywhere;
+      }
+      .topic .topic-picked {
+        font: 11px/1.35 var(--font-label);
+        color: #a6c4d4;
+        overflow-wrap: anywhere;
+      }
+      .topic .topic-picked .topic-earned {
+        font-weight: 700;
+      }
+      .topic .topic-chevron {
+        font-size: 18px;
+        color: #a1b9d1;
+        transition: transform 0.16s;
+      }
+      .topic[open] .topic-chevron {
+        transform: rotate(180deg);
+      }
+      .topic-body {
+        padding: 11px 15px 14px;
+        border-top: 1px solid #2c3d53;
+      }
+      .topic-sub {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 0 0 10px;
+        font: 700 10px var(--font-label);
+        letter-spacing: 1px;
+        color: #a8c9e1;
+      }
+      .topic-search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        border: 1px solid #405574;
+        border-radius: 8px;
+        background: #0a1526;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        color: #9ab9cf;
+      }
+      .topic-search svg {
+        width: 17px;
+        height: 17px;
+        flex: none;
+      }
+      .topic-search input {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        font: 12px var(--font-label);
+        color: #e8f5fa;
+        outline: none;
+        padding: 0;
+      }
+      .topic-search input::placeholder {
+        color: #89aac9;
+      }
+      .topic-search:focus-within {
+        border-color: #86d8e0;
+        box-shadow: 0 0 0 2px #64d4d021;
+      }
+      .answers {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+      }
+      .answer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(75px, auto) 36px;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        padding: 8px 3px 8px 2px;
+        border-bottom: 1px solid #40506a6e;
+      }
+      .answer:last-child {
+        border-bottom: 0;
+      }
+      .answer.mine {
+        border-left: 2px solid var(--lime);
+        padding-left: 9px;
+        background: linear-gradient(90deg, #b2ef7010, transparent 53%);
+      }
+      .answer-title {
+        font: 700 16px/1.18 var(--font-display);
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .answer.mine .answer-title {
+        color: var(--lime);
+      }
+      .you-label {
+        font: 800 9px var(--font-label);
+        color: var(--lime);
+        margin-left: 6px;
+        white-space: nowrap;
+      }
+      .answer-tier {
+        font: 800 10px var(--font-label);
+        text-align: right;
+        letter-spacing: 0.1px;
+        white-space: nowrap;
+      }
+      .answer-score {
+        font: 800 13px var(--font-label);
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .golden-note {
+        font: 11px/1.5 var(--font-label);
+        color: #b9c7d0;
+        display: block;
+        margin-top: 4px;
+        overflow-wrap: anywhere;
+      }
+      .show-more {
+        background: transparent;
+        border: 1px solid #59718a;
+        border-radius: 6px;
+        color: var(--cyan);
+        padding: 8px 11px;
+        font: 700 11px var(--font-label);
+        margin-top: 12px;
+      }
+      .show-more:hover {
+        border-color: var(--lime);
+        color: var(--lime);
+      }
+      .end-quick-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 19px 0 17px;
+      }
+      .end-quick-actions .primary {
+        font-size: clamp(17px, 2vw, 22px);
+        letter-spacing: 1.2px;
+        min-height: 53px;
+        padding: 13px 21px;
+        box-shadow: 4px 4px 0 #ff619f4d;
+      }
+      .end-quick-actions .secondary {
+        font-size: 16px;
+        min-height: 53px;
+        padding: 13px 20px;
+        min-width: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .archive-panel {
+        padding: 16px 18px 19px;
+        background: #111d30f5;
+        border: 1px solid #405977;
+        border-radius: 10px;
+        margin: 0 0 22px;
+      }
+      .archive-panel h3 {
+        margin: 0 0 5px;
+        font: 900 22px var(--font-display);
+        letter-spacing: 1px;
+      }
+      .archive-panel p,
+      .archive-panel [role="status"] {
+        font: 12px/1.5 var(--font-label);
+        color: #a8c4d3;
+        margin: 0 0 12px;
+      }
+      .archive-panel [role="status"]:empty {
+        display: none;
+      }
+      .archive-dates {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+      }
+      .archive-day {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        border: 1px solid #43607b;
+        border-radius: 8px;
+        background: #09182a;
+        color: #e5f5f8;
+        padding: 12px 14px;
+        cursor: pointer;
+        text-align: left;
+      }
+      .archive-day strong {
+        font: 800 17px var(--font-display);
+      }
+      .archive-day small {
+        font: 11px var(--font-label);
+        color: #a7c4d2;
+      }
+      .archive-day:hover:not(:disabled) {
+        border-color: var(--lime);
+        background: #142a34;
+      }
+      .archive-day:disabled {
+        opacity: 0.58;
+        cursor: default;
+      }
+      .archive-day.completed {
+        border-color: #617a7d;
+        background: #132631;
+      }
+      .archive-day.completed small {
+        color: #c1e4c9;
+      }
+      .result-save-status {
+        font: 12px/1.5 var(--font-label);
+        color: #b7d6e2;
+        margin: 12px 0 4px;
+      }
+      .result-save-status:empty {
+        display: none;
+      }
+      @media (max-width: 560px) {
+        .end-quick-actions .primary,
+        .end-quick-actions .secondary {
+          flex: 1 1 100%;
+          width: 100%;
+        }
+        .archive-dates {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 780px) {
+        .end-metrics {
+          gap: 16px 26px;
+        }
+        .end-metric.distance {
+          margin-left: 0;
+        }
+        .daily-compare {
+          padding: 15px 13px;
+        }
+        .chart-area {
+          height: 125px;
+        }
+        .chart-bars {
+          gap: 2px;
+        }
+        .topic-body {
+          padding: 10px 11px 12px;
+        }
+        .topic summary {
+          padding: 12px 10px;
+          grid-template-columns: 25px minmax(0, 1fr) 18px;
+          gap: 8px;
+        }
+        .answer {
+          grid-template-columns: minmax(0, 1fr) minmax(64px, auto) 29px;
+          gap: 8px;
+        }
+        .answer-title {
+          font-size: 15px;
+        }
+        .answer-tier {
+          font-size: 9px;
+        }
+        .answer-score {
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 780px) {
+        .nav {
+          height: 68px;
+        }
+        .home-hero h1 {
+          font-size: clamp(58px, 12.4vw, 92px);
+        }
+        .home-sub {
+          margin-top: 24px;
+        }
+        .home-bottom {
+          padding-top: clamp(50px, 8vh, 90px);
+        }
+        .question-block h2 {
+          font-size: clamp(34px, 9vw, 64px);
+        }
+        .game-expanse {
+          min-height: clamp(135px, 26vh, 255px);
+        }
+        .distance-pylon {
+          right: 0;
+          bottom: 6px;
+        }
+        .distance-pylon strong {
+          font-size: 50px;
+        }
+        .answer {
+          gap: 4px;
+        }
+        .answers {
+          grid-template-columns: 1fr;
+        }
+        .topic-body {
+          padding-left: 0;
+        }
+        .topic summary {
+          grid-template-columns: 28px minmax(0, 1fr) auto 20px;
+        }
+        .typebar button {
+          min-width: 117px;
+          font-size: 16px;
+        }
+        .screen {
+          min-height: calc(100dvh - 135px);
+        }
+      }
+      @media (max-width: 420px) {
+        .site-credit {
+          font-size: 8px;
+        }
+        .mark-text strong {
+          font-size: 21px;
+        }
+        .mark-text small {
+          font-size: 9px;
+          letter-spacing: 1.3px;
+        }
+        .nav-return {
+          font-size: 10px;
+        }
+        .home-hero h1 {
+          font-size: clamp(50px, 12.3vw, 64px);
+        }
+        .home-sub {
+          font-size: 16px;
+        }
+        .home-bottom {
+          padding-top: 60px;
+        }
+        .question-line {
+          align-items: flex-end;
+        }
+        .time-readout strong {
+          font-size: 26px;
+        }
+        .time-readout {
+          margin-left: 12px;
+        }
+        .round-identifier span {
+          font-size: 26px;
+        }
+        .round-stats {
+          gap: 10px;
+        }
+        .round-identifier {
+          font-size: 18px;
+        }
+        .run-score {
+          font-size: 22px;
+          padding-left: 10px;
+        }
+        .run-score small {
+          font-size: 17px;
+        }
+        .distance-pylon strong {
+          font-size: 38px;
+        }
+        .typebar input {
+          padding: 11px 12px;
+        }
+        .typebar {
+          min-height: 57px;
+        }
+        .typebar button {
+          min-width: 100px;
+          font-size: 15px;
+        }
+        .route-index {
+          gap: 5px;
+        }
+        .route-index span {
+          width: 22px;
+        }
+      }
+      /* Keep the entire playable stage inside shorter laptop/mobile viewports.
+   The timer now uses height beneath the input, reclaimed from the sky area. */
+      @media (max-height: 760px) {
+        .screen-play {
+          padding-top: clamp(12px, 2.8vh, 25px);
+        }
+        .question-line {
+          padding-bottom: 10px;
+        }
+        .question-block {
+          padding: 14px 0 3px;
+        }
+        .question-block h2 {
+          font-size: clamp(30px, 5vw, 60px);
+          margin-bottom: 9px;
+        }
+        .game-expanse {
+          min-height: clamp(95px, 18vh, 180px);
+        }
+        .play-controls {
+          margin-bottom: 6px;
+        }
+        .timer-under-input {
+          margin-top: 5px;
+        }
+        .time-readout {
+          margin-top: 3px;
+        }
+        .time-readout strong {
+          font-size: 25px;
+        }
+      }
+      @media (max-height: 620px) {
+        .screen-play {
+          padding-top: 12px;
+        }
+        .question-block {
+          padding-top: 10px;
+        }
+        .question-block h2 {
+          font-size: clamp(28px, 4.8vw, 45px);
+        }
+        .game-expanse {
+          min-height: 80px;
+        }
+        .typebar {
+          min-height: 52px;
+        }
+        .typebar input {
+          padding-top: 8px;
+          padding-bottom: 8px;
+        }
+        .play-controls {
+          margin-bottom: 3px;
+        }
+        .time-readout strong {
+          font-size: 23px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .primary {
+          transition: none;
+        }
+        .scanlines {
+          opacity: 0.07;
+        }
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      /* A shared live countdown, shown above See Results and at the top of results. */
+      .reset-countdown {
+        color: #d7f6fc;
+        font: 700 14px/1.35 var(--font-label);
+        letter-spacing: 0.3px;
+        font-variant-numeric: tabular-nums;
+        text-shadow:
+          0 0 7px #91eafc75,
+          0 0 18px #5adcf939;
+      }
+      .reset-countdown [data-next-reset] {
+        color: #e7faff;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .reset-countdown-home {
+        width: max-content;
+        max-width: 100%;
+        margin: 0 0 13px;
+        font-size: clamp(22px, 2.4vw, 27px);
+        font-weight: 800;
+      }
+      .reset-countdown-results {
+        font-size: clamp(22px, 2.8vw, 30px);
+        font-weight: 700;
+        margin: 18px 0 4px;
+        text-shadow:
+          0 0 9px #91eafc88,
+          0 0 23px #5adcf940;
+      }
+      @media (max-width: 620px) {
+        .reset-countdown-home {
+          font-size: clamp(18px, 4.5vw, 23px);
+        }
+        .reset-countdown-results {
+          font-size: clamp(21px, 5.2vw, 27px);
+        }
+      }
+      @media (min-width: 1050px) {
+        /* Use the empty right side of the home scene instead of pushing buttons down. */
+        .home-bottom:has(#home-archive-panel:not(.hidden)) {
+          position: relative;
+          width: 100%;
+          max-width: none;
+        }
+        .home-bottom:has(#home-archive-panel:not(.hidden))
+          :is(
+            .archive-home-label,
+            .home-actions,
+            .home-run-status,
+            .reset-countdown-home
+          ) {
+          max-width: calc(100% - 390px);
+        }
+        .home-bottom #home-archive-panel:not(.hidden) {
+          position: absolute;
+          right: 0;
+          bottom: clamp(30px, 5vh, 60px);
+          width: 360px;
+          max-height: min(72vh, 540px);
+          overflow-y: auto;
+          margin: 0;
+          z-index: 6;
+          box-shadow: 0 16px 45px #0009;
+        }
+      }
+
+      /* Original Web Audio sound effects remain enabled; Discord replaces the mute control. */
+      .discord-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex: none;
+        min-height: 37px;
+        padding: 0 12px;
+        text-decoration: none;
+        white-space: nowrap;
+        border: 1px solid #8a8ff19a;
+        border-radius: 5px;
+        background: #1a203a;
+        color: #b6bcff;
+        font: 700 12px/1.2 var(--font-label);
+        transition:
+          color 0.18s,
+          background 0.18s,
+          border-color 0.18s;
+      }
+      .discord-link:hover,
+      .discord-link:focus-visible {
+        border-color: #b6bcff;
+        color: #e1e5ff;
+        background: #28315b;
+      }
+      .discord-link svg {
+        width: 18px;
+        height: 18px;
+        flex: none;
+      }
+      .nav-right {
+        gap: 10px;
+      }
+      @media (max-width: 420px) {
+        .mark-glyph {
+          display: none;
+        }
+        .mark-text small {
+          display: none;
+        }
+        .feedback-trigger {
+          font-size: 9px;
+          max-width: 140px;
+          padding: 8px 7px;
+        }
+        .nav {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+      }
+
+      /* Player-facing Ko-fi and Discord links in the game header. */
+      .support-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex: none;
+        min-height: 37px;
+        padding: 0 13px;
+        text-decoration: none;
+        white-space: nowrap;
+        border: 1px solid #ff687a62;
+        border-radius: 5px;
+        background: #201b2c;
+        color: #ff6c81;
+        font: 700 12px/1.2 var(--font-label);
+        transition:
+          border-color 0.17s,
+          background 0.17s,
+          color 0.17s;
+      }
+      .support-link:hover {
+        border-color: #ff8398;
+        background: #302039;
+        color: #ffa0ae;
+      }
+      .support-link svg {
+        width: 16px;
+        height: 16px;
+        flex: none;
+      }
+      @media (max-width: 700px) {
+        .nav {
+          gap: 10px;
+        }
+        .nav-right {
+          gap: 7px;
+        }
+        .support-link {
+          width: 35px;
+          min-height: 35px;
+          padding: 0;
+        }
+        .support-link .support-label {
+          display: none;
+        }
+      }
+      @media (max-width: 520px) {
+        .discord-link {
+          min-width: 35px;
+          width: 35px;
+          min-height: 35px;
+          padding: 0;
+        }
+        .discord-link .discord-label {
+          display: none;
+        }
+      }
+      @media (max-width: 420px) {
+        .mark-text strong {
+          font-size: 18px;
+          letter-spacing: 1.2px;
+        }
+        .feedback-trigger {
+          max-width: 110px;
+          font-size: 8px;
+          line-height: 1.3;
+          padding: 7px 5px;
+        }
+      }
+      @media (max-width: 360px) {
+        .nav {
+          padding-left: 10px;
+          padding-right: 10px;
+          gap: 8px;
+        }
+        .mark-text strong {
+          font-size: 17px;
+          letter-spacing: 0.8px;
+        }
+        .feedback-trigger {
+          max-width: 84px;
+        }
+      }
+
+      /* PACKS BETA: shared styling for the public site and Design Lab */
+      .packs-entry {
+        position: relative !important;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 145px;
+        letter-spacing: 2px;
+        font-size: 19px;
+        font-weight: 900;
+        border: 2px solid #dafbff;
+        background: linear-gradient(
+          135deg,
+          #b8f7ff 0%,
+          #75dfff 48%,
+          #72bfff 100%
+        );
+        color: #092338;
+        text-shadow: 0 1px 0 #ffffff9e;
+        box-shadow:
+          0 0 0 1px #7acfff88,
+          0 6px 23px #35b4fa71,
+          5px 5px 0 #3261a67d;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          filter 0.2s ease;
+      }
+      .packs-entry::before {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+        inset: 3px 45% 48% 4px;
+        border-radius: 3px;
+        background: linear-gradient(135deg, #ffffff8a, transparent);
+      }
+      .packs-entry:hover {
+        color: #092338;
+        filter: brightness(1.08);
+        transform: translateY(-2px);
+        box-shadow:
+          0 0 0 1px #cbf8ff,
+          0 10px 31px #3cbdfaa3,
+          5px 7px 0 #3261a67d;
+      }
+      .packs-entry:active {
+        transform: translateY(1px);
+        box-shadow:
+          0 0 0 1px #9feeff,
+          0 3px 15px #3cbdfaa3,
+          2px 2px 0 #3261a67d;
+      }
+      .end-quick-actions .packs-entry {
+        font-size: 19px;
+        min-height: 53px;
+        min-width: 145px;
+        white-space: nowrap;
+        padding: 13px 19px;
+      }
+      @media (max-width: 560px) {
+        .end-quick-actions #home-btn,
+        .end-quick-actions #end-packs-entry {
+          flex: 1 1 calc(50% - 8px);
+          width: auto;
+        }
+        .end-quick-actions #end-packs-entry {
+          min-width: 125px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .packs-entry {
+          transition: none;
+        }
+      }
+      .packs-beta-label {
+        position: absolute;
+        right: -13px;
+        top: -16px;
+        z-index: 1;
+        padding: 6px 9px;
+        border: 1px solid #ffd97c;
+        background: #ffce5b;
+        color: #132233;
+        font: 900 14px/1 var(--font-pixel);
+        letter-spacing: 0;
+        transform: rotate(7deg);
+        box-shadow: 2px 3px 0 #07121d;
+      }
+      .home-actions .packs-entry {
+        flex: 0 0 auto;
+        min-width: 145px;
+      }
+      .pack-menu-screen {
+        padding: clamp(34px, 6vh, 76px) 0 38px;
+        gap: 20px;
+      }
+      .pack-kicker {
+        font: 800 11px/1.5 var(--font-label);
+        letter-spacing: 2.5px;
+        color: var(--cyan);
+        text-transform: uppercase;
+      }
+      .pack-menu-heading {
+        font: 900 clamp(48px, 7.1vw, 91px)/0.91 var(--font-display);
+        letter-spacing: -1.3px;
+        text-transform: uppercase;
+        margin: 12px 0 18px;
+      }
+      .pack-menu-heading em {
+        font-style: normal;
+        color: var(--lime);
+      }
+      .pack-menu-sub {
+        font:
+          500 clamp(15px, 1.65vw, 20px)/1.6 system-ui,
+          sans-serif;
+        color: #bfd9df;
+        max-width: 690px;
+        margin: 0 0 14px;
+      }
+      .pack-back {
+        align-self: flex-start;
+        min-width: 160px;
+        margin: 4px 0 12px;
+        border-color: #88b8c6b3;
+        color: #d7f1f2;
+      }
+      .pack-tile-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        max-width: 930px;
+      }
+      .pack-tile {
+        --category: #ff7979;
+        position: relative;
+        min-height: 92px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        text-align: left;
+        padding: 19px 22px;
+        border: 1px solid color-mix(in srgb, var(--category) 65%, #5e7d8c);
+        border-left: 5px solid var(--category);
+        border-radius: 7px;
+        background: linear-gradient(
+          100deg,
+          color-mix(in srgb, var(--category) 14%, #0c2031),
+          #0d1c2ad9
+        );
+        box-shadow: 0 12px 27px #0002;
+        color: #f2f9ff;
+        transition:
+          transform 0.15s,
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .pack-tile strong {
+        font: 900 clamp(20px, 2.3vw, 29px)/1.05 var(--font-display);
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+      }
+      .pack-tile .pack-tile-symbol {
+        color: var(--category);
+        font: 900 24px/1 var(--font-pixel);
+      }
+      .pack-tile:not(:disabled):hover {
+        transform: translateX(4px);
+        border-color: var(--category);
+        background: linear-gradient(
+          100deg,
+          color-mix(in srgb, var(--category) 24%, #0d2030),
+          #0e2534
+        );
+      }
+      .pack-tile:disabled {
+        cursor: not-allowed;
+        filter: grayscale(1);
+        opacity: 0.72;
+        background: #172432;
+        padding-top: 31px;
+      }
+      .pack-coming {
+        position: absolute;
+        right: 10px;
+        top: 9px;
+        font: 800 12px/1.2 var(--font-pixel);
+        color: #edf3fa;
+        letter-spacing: 0.1px;
+        white-space: nowrap;
+        text-shadow: 0 1px 5px #080d19;
+      }
+      .pack-tile:disabled strong {
+        color: #b8c4cd;
+      }
+      .pack-category-red {
+        --category: #ff6d79;
+      }
+      .pack-category-blue {
+        --category: #8bdfff;
+      }
+      .pack-category-yellow {
+        --category: #ffd264;
+      }
+      .pack-category-purple {
+        --category: #ba9aff;
+      }
+      .pack-category-green {
+        --category: #cbf58d;
+      }
+      .pack-category-orange {
+        --category: #ffa36b;
+      }
+      .pack-slot-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        max-width: 1000px;
+      }
+      .pack-slot-grid .pack-tile {
+        min-height: 99px;
+        padding: 16px 12px;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 6px;
+        text-align: center;
+      }
+      .pack-slot-grid .pack-tile strong {
+        font-size: clamp(22px, 2.4vw, 30px);
+      }
+      .pack-slot-grid .pack-coming {
+        right: 7px;
+        top: 7px;
+        font-size: 10px;
+      }
+      .pack-detail-hero {
+        margin-top: clamp(48px, 8vh, 96px);
+        max-width: 960px;
+      }
+      .pack-detail-hero h1 {
+        font: 900 clamp(50px, 6.8vw, 89px)/0.94 var(--font-display);
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        margin: 16px 0 0;
+        text-wrap: balance;
+      }
+      .pack-detail-hero h1 span {
+        color: #ff8590;
+        text-shadow: 0 0 32px #b6224a63;
+      }
+      .pack-detail-hero .pack-subheading {
+        font: 900 clamp(30px, 3.8vw, 51px)/1 var(--font-display);
+        color: #f1f9ff;
+        letter-spacing: 3px;
+        margin: 12px 0 20px;
+      }
+      .pack-detail-bottom {
+        margin-top: auto;
+        padding-bottom: clamp(38px, 7vh, 72px);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 13px;
+      }
+      .pack-detail-bottom #pack-begin {
+        width: min(100%, 520px);
+        justify-content: space-between;
+      }
+      .pack-detail-bottom .pack-back {
+        margin: 0;
+      }
+      .pack-detail-status {
+        color: #deeff2;
+        min-height: 20px;
+        font: 12px var(--font-label);
+      }
+      .pack-scene-tint {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background: radial-gradient(
+          ellipse at 40% 50%,
+          #b82a3a22 0%,
+          #a6233630 40%,
+          #41112745 90%
+        );
+        mix-blend-mode: screen;
+      }
+      body[data-pack-active="true"] .pack-scene-tint {
+        display: block;
+      }
+      body[data-pack-active="true"] .pack-detail-hero .pack-kicker {
+        color: #ff9fa6;
+      }
+      body[data-pack-active="true"] .pack-detail-bottom .primary {
+        background: #ff8491;
+        border-color: #ffb3b9;
+        color: #171d26;
+        box-shadow: 7px 7px 0 #ffbca154;
+      }
+      body[data-pack-active="true"] .pack-detail-bottom .primary:hover {
+        background: #ff9ca5;
+      }
+      body[data-pack-active="true"] #screen-play .round-identifier span {
+        color: #ff9ba7;
+      }
+      body[data-pack-active="true"] .end-metric.percentile strong {
+        color: #ffb4be;
+      }
+      @media (max-width: 800px) {
+        .pack-slot-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .pack-menu-heading {
+          font-size: clamp(44px, 10vw, 75px);
+        }
+      }
+      @media (max-width: 620px) {
+        .pack-tile-grid {
+          grid-template-columns: 1fr;
+        }
+        .pack-slot-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .home-actions .packs-entry {
+          flex: 1 1 100%;
+          min-height: 54px;
+        }
+        .pack-detail-hero h1 {
+          font-size: clamp(45px, 12vw, 64px);
+        }
+      }
+      @media (max-width: 390px) {
+        .pack-slot-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pack-slot-grid .pack-tile {
+          min-height: 80px;
+        }
+      }
+
+      /* Completed flag uses the lower part of the Pack 1 tile, without disabling
+   its results-review action or covering the pack title. */
+      .pack-slot-grid #packs-first-pack {
+        position: relative;
+      }
+      .pack-slot-grid #packs-first-pack.pack-is-completed {
+        padding-bottom: 30px;
+      }
+      .pack-slot-grid .pack-completed {
+        position: absolute;
+        bottom: 8px;
+        left: 9px;
+        right: 9px;
+        text-align: center;
+        font: 900 12px/1.25 var(--font-pixel);
+        letter-spacing: 0.3px;
+        color: #baffd8;
+        text-shadow: 0 0 11px #81d3a76e;
+      }
+      .pack-slot-grid #packs-first-pack.pack-is-completed .pack-tile-symbol {
+        color: #baffd8;
+      }
+      @media (max-width: 620px) {
+        .home-actions .packs-entry {
+          font-size: 19px;
+        }
+        .packs-beta-label {
+          font-size: 14px;
+        }
+        .pack-coming {
+          font-size: 11px;
+        }
+      }
+      /* Keep the longer archived-run CTA on one line without making the row taller. */
+      @media (min-width: 621px) {
+        .home-bottom:has(#archive-home-label:not(:empty)):not(
+            :has(#home-archive-panel:not(.hidden))
+          ) {
+          max-width: 850px;
+        }
+        .home-bottom:has(#archive-home-label:not(:empty)) .home-actions #start {
+          flex: 1 0 auto;
+          width: auto;
+          max-width: 100%;
+          min-height: 63px;
+          font-size: clamp(20px, 2.3vw, 26px);
+          letter-spacing: 1.5px;
+          gap: 18px;
+          padding: 16px 22px;
+        }
+        .home-bottom:has(#archive-home-label:not(:empty)) #start-label {
+          white-space: nowrap;
+        }
+        .home-bottom:has(#archive-home-label:not(:empty))
+          .home-actions
+          #start
+          .symbol {
+          flex: none;
+        }
+      }
+      /* Keep all home actions in one compact row while the archive picker is open. */
+      @media (min-width: 621px) {
+        .home-bottom:has(#home-archive-panel:not(.hidden)) .home-actions {
+          flex-wrap: nowrap;
+          gap: 10px;
+        }
+        .home-bottom:has(#home-archive-panel:not(.hidden))
+          .home-actions
+          #start {
+          flex: 1 1 0;
+          min-width: 0;
+          width: auto;
+          min-height: 63px;
+          font-size: clamp(18px, 1.65vw, 22px);
+          letter-spacing: 0.6px;
+          gap: 10px;
+          padding: 14px 12px;
+        }
+        .home-bottom:has(#home-archive-panel:not(.hidden)) #start-label {
+          white-space: nowrap;
+        }
+        .home-bottom:has(#home-archive-panel:not(.hidden))
+          .home-actions
+          #start
+          .symbol {
+          flex: none;
+          font-size: 18px;
+        }
+        .home-bottom:has(#home-archive-panel:not(.hidden))
+          .home-actions
+          #home-archive-toggle {
+          flex: 0 0 auto;
+          min-width: 0;
+          padding: 12px;
+          font-size: 14px;
+          letter-spacing: 1px;
+        }
+        .home-bottom:has(#home-archive-panel:not(.hidden))
+          .home-actions
+          .packs-entry {
+          flex: 0 0 auto;
+          min-width: 100px;
+          padding: 12px 16px;
+          font-size: 17px;
+        }
+      }
+      @media (min-width: 1050px) {
+        .home-bottom:has(#home-archive-panel:not(.hidden))
+          :is(
+            .archive-home-label,
+            .home-actions,
+            .home-run-status,
+            .reset-countdown-home
+          ) {
+          max-width: calc(100% - 370px);
+        }
+        .home-bottom #home-archive-panel:not(.hidden) {
+          width: 340px;
+        }
+      }
+      .achievement-clarification {
+        color: #ff6279;
+        font-size: 1.12em;
+        font-weight: 800;
+        margin-left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="world" aria-hidden="true"></canvas>
+    <div class="end-shade" aria-hidden="true"></div>
+    <div class="pack-scene-tint" aria-hidden="true"></div>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="ui">
+      <nav class="nav">
+        <a href="/" class="mark" aria-label="Dashllion home"
+          ><span class="mark-glyph">D</span
+          ><span class="mark-text"
+            ><strong>DASHLLION</strong><small>GEOMETRY DASH RARITY</small></span
+          ></a
+        >
+        <div class="nav-right">
+          <a
+            class="support-link"
+            href="https://ko-fi.com/miltlul"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Support Dashllion on Ko-fi"
+            title="Support Dashllion on Ko-fi"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M3.5 5.5h13.5v8a5.5 5.5 0 0 1-5.5 5.5H9a5.5 5.5 0 0 1-5.5-5.5z"
+              />
+              <path d="M17 7h1.5a3 3 0 0 1 0 6H17" />
+              <path
+                d="M7.5 10c0-1.6 1.9-2 2.8-.7.9-1.3 2.8-.9 2.8.7 0 1.6-2.8 3.3-2.8 3.3S7.5 11.6 7.5 10z"
+                fill="currentColor"
+                stroke="none"
+              /></svg
+            ><span class="support-label">Support me</span></a
+          ><a
+            class="discord-link"
+            href="https://discord.gg/8bV8rscHR"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Join Dashllion Discord"
+            title="Join Dashllion Discord"
+            ><svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.52 13.96 13.96 0 0 0-.577 1.155 18.27 18.27 0 0 0-5.71 0 12.75 12.75 0 0 0-.584-1.155 19.74 19.74 0 0 0-4.886 1.52C.534 9.044-.321 13.58.098 18.058a19.89 19.89 0 0 0 5.994 3.031 14.5 14.5 0 0 0 1.283-2.086 12.99 12.99 0 0 1-2.02-.973c.17-.122.334-.251.494-.383 3.895 1.829 8.12 1.829 11.967 0 .16.132.325.26.493.383-.645.38-1.323.705-2.022.976.372.736.802 1.435 1.286 2.085a19.86 19.86 0 0 0 6-3.03c.492-5.188-.838-9.682-3.542-13.659ZM8.02 15.33c-1.18 0-2.153-1.08-2.153-2.41 0-1.326.954-2.41 2.153-2.41 1.21 0 2.17 1.091 2.15 2.41 0 1.33-.954 2.41-2.15 2.41Zm7.96 0c-1.18 0-2.151-1.08-2.151-2.41 0-1.326.953-2.41 2.151-2.41 1.21 0 2.17 1.091 2.15 2.41 0 1.33-.94 2.41-2.15 2.41Z"
+              /></svg
+            ><span class="discord-label">Discord</span></a
+          ><button type="button" id="feedback-open" class="feedback-trigger">
+            ✎ REPORT ERROR / FEEDBACK
+          </button>
+        </div>
+      </nav>
+      <main class="stage">
+        <section class="screen screen-home" id="screen-home">
+          <div class="home-hero">
+            <h1>HOW RARE<br /><span>CAN YOU GO?</span></h1>
+            <p class="home-sub">
+              You'll get 7 prompts about Geometry Dash and 30 seconds per
+              prompt. Try to guess the rarest answers possible
+            </p>
+          </div>
+          <div class="home-bottom">
+            <div id="archive-home-label" class="archive-home-label"></div>
+            <div
+              id="home-next-reset"
+              class="reset-countdown reset-countdown-home hidden"
+              role="timer"
+            >
+              Next Reset: <span data-next-reset>00:00:00</span>
+            </div>
+            <div class="home-actions">
+              <button class="primary" id="start" disabled>
+                <span id="start-label">CHECKING RUN…</span
+                ><span class="symbol" aria-hidden="true">→</span>
+              </button>
+              <button
+                type="button"
+                class="secondary hidden"
+                id="home-archive-toggle"
+                aria-expanded="false"
+                aria-controls="home-archive-panel"
+              >
+                ◷ PREVIOUS DAYS
+              </button>
+              <button
+                type="button"
+                id="packs-entry"
+                class="secondary packs-entry"
+              >
+                PACKS<span class="packs-beta-label">BETA</span>
+              </button>
+            </div>
+            <p id="home-run-status" class="home-run-status" role="status"></p>
+            <section
+              id="home-archive-panel"
+              class="archive-panel hidden"
+              aria-label="Select archived daily run"
+            >
+              <h3>TODAY + PREVIOUS 7 DAYS</h3>
+              <p>
+                Choose a day to play or see its completed results. Each run
+                counts once.
+              </p>
+              <div id="home-archive-status" role="status"></div>
+              <div id="home-archive-dates" class="archive-dates"></div>
+            </section>
+          </div>
+        </section>
+
+        <section
+          class="screen pack-menu-screen hidden"
+          id="screen-pack-categories"
+        >
+          <div class="pack-kicker">PACKS</div>
+          <h1 class="pack-menu-heading">CHOOSE A<br /><em>CATEGORY</em></h1>
+          <p class="pack-menu-sub">
+            Play themed sets of seven Geometry Dash prompts, whenever you want.
+            Each pack can be completed once.
+          </p>
+          <div class="pack-tile-grid" aria-label="Pack categories">
+            <button
+              type="button"
+              id="packs-category-demonlists"
+              class="pack-tile pack-category-red"
+            >
+              <strong>Demonlists &amp; Competitive</strong
+              ><span class="pack-tile-symbol">↗</span>
+            </button>
+            <button type="button" class="pack-tile pack-category-blue" disabled>
+              <span class="pack-coming">COMING SOON</span
+              ><strong>Levels &amp; Creators</strong>
+            </button>
+            <button
+              type="button"
+              class="pack-tile pack-category-yellow"
+              disabled
+            >
+              <span class="pack-coming">COMING SOON</span
+              ><strong>GD History</strong>
+            </button>
+            <button
+              type="button"
+              class="pack-tile pack-category-purple"
+              disabled
+            >
+              <span class="pack-coming">COMING SOON</span><strong>Music</strong>
+            </button>
+            <button
+              type="button"
+              class="pack-tile pack-category-green"
+              disabled
+            >
+              <span class="pack-coming">COMING SOON</span
+              ><strong>Game Knowledge</strong>
+            </button>
+            <button
+              type="button"
+              class="pack-tile pack-category-orange"
+              disabled
+            >
+              <span class="pack-coming">COMING SOON</span
+              ><strong>Community</strong>
+            </button>
+          </div>
+          <button
+            type="button"
+            id="packs-back-home"
+            class="secondary pack-back"
+          >
+            ← BACK TO HOME
+          </button>
+        </section>
+        <section class="screen pack-menu-screen hidden" id="screen-pack-list">
+          <div class="pack-kicker">PACKS</div>
+          <h1
+            class="pack-menu-heading"
+            style="font-size: clamp(46px, 6vw, 83px)"
+          >
+            DEMONLISTS &amp;<br /><em style="color: #ff8892">COMPETITIVE</em>
+          </h1>
+          <p class="pack-menu-sub">Choose a pack.</p>
+          <div
+            class="pack-slot-grid"
+            id="pack-slot-grid"
+            aria-label="Demonlists and Competitive packs"
+          >
+            <button
+              type="button"
+              id="packs-first-pack"
+              class="pack-tile pack-category-red"
+            >
+              <strong>PACK 1</strong
+              ><span class="pack-tile-symbol" aria-hidden="true">↗</span
+              ><span class="pack-completed hidden" id="pack1-completed-label"
+                >COMPLETED</span
+              >
+            </button>
+            <button type="button" class="pack-tile" disabled>
+              <span class="pack-coming">COMING SOON</span
+              ><strong>PACK 2</strong>
+            </button>
+            <button type="button" class="pack-tile" disabled>
+              <span class="pack-coming">COMING SOON</span
+              ><strong>PACK 3</strong>
+            </button>
+            <button type="button" class="pack-tile" disabled>
+              <span class="pack-coming">COMING SOON</span
+              ><strong>PACK 4</strong>
+            </button>
+            <button type="button" class="pack-tile" disabled>
+              <span class="pack-coming">COMING SOON</span
+              ><strong>PACK 5</strong>
+            </button>
+            <button type="button" class="pack-tile" disabled>
+              <span class="pack-coming">COMING SOON</span
+              ><strong>PACK 6</strong>
+            </button>
+            <button type="button" class="pack-tile" disabled>
+              <span class="pack-coming">COMING SOON</span
+              ><strong>PACK 7</strong>
+            </button>
+            <button type="button" class="pack-tile" disabled>
+              <span class="pack-coming">COMING SOON</span
+              ><strong>PACK 8</strong>
+            </button>
+            <button type="button" class="pack-tile" disabled>
+              <span class="pack-coming">COMING SOON</span
+              ><strong>PACK 9</strong>
+            </button>
+            <button type="button" class="pack-tile" disabled>
+              <span class="pack-coming">COMING SOON</span
+              ><strong>PACK 10</strong>
+            </button>
+          </div>
+          <button
+            type="button"
+            id="packs-back-categories"
+            class="secondary pack-back"
+          >
+            ← CATEGORIES
+          </button>
+        </section>
+        <section class="screen hidden" id="screen-pack-detail">
+          <div class="pack-detail-hero">
+            <h1>DEMONLISTS &amp;<br /><span>COMPETITIVE</span></h1>
+            <div class="pack-subheading">PACK 1</div>
+            <p class="home-sub">
+              7 prompts about competitive Geometry Dash. Find the rarest answer
+              you can think of in 30 seconds per prompt.
+            </p>
+          </div>
+          <div class="pack-detail-bottom">
+            <button
+              type="button"
+              class="secondary pack-back"
+              id="pack-detail-back"
+            >
+              ← BACK TO PACKS
+            </button>
+            <button class="primary" id="pack-begin" type="button" disabled>
+              <span id="pack-begin-label">CHECKING PACK…</span
+              ><span class="symbol" aria-hidden="true">→</span>
+            </button>
+            <div
+              id="pack-detail-status"
+              class="pack-detail-status"
+              role="status"
+            ></div>
+          </div>
+        </section>
+        <section class="screen screen-play hidden" id="screen-play">
+          <div class="question-line">
+            <div class="round-stats">
+              <div class="round-identifier">
+                <span id="round-num">01</span> / 07
+              </div>
+              <div class="run-score">
+                <span id="run-points">0</span><small> / 700</small>
+              </div>
+            </div>
+          </div>
+          <div class="question-block">
+            <h2 id="question" aria-live="polite">NAME A LEVEL</h2>
+            <div id="hint" class="question-hint"></div>
+          </div>
+          <div class="game-expanse">
+            <div class="distance-pylon">
+              <div class="upper">JUMP DISTANCE</div>
+              <strong
+                ><span id="distance-meter">0000</span><small>M</small></strong
+              >
+            </div>
+          </div>
+          <div class="play-controls">
+            <div id="submit-area">
+              <div class="answer-entry">
+                <div
+                  id="answer-feedback"
+                  class="answer-feedback"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                ></div>
+                <div class="input-label"><span>↵ TO SUBMIT</span></div>
+                <form id="answer-form" class="typebar">
+                  <input
+                    id="answer-input"
+                    type="text"
+                    autocomplete="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                    maxlength="80"
+                    aria-label="Enter an answer"
+                    placeholder="Start typing..."
+                    required
+                  /><button id="submit" type="submit">SEND ↗</button>
+                </form>
+              </div>
+              <div class="timer-under-input" aria-label="Time remaining">
+                <div class="time-rail">
+                  <div id="time-fill" class="time-rail-fill"></div>
+                </div>
+                <div class="time-readout">
+                  <strong id="seconds">30.0</strong><small>SEC</small>
+                </div>
+              </div>
+            </div>
+            <div id="reveal" class="reveal hidden">
+              <div class="next-position">
+                <div>
+                  <div class="reveal-main">
+                    <div id="reveal-name" class="reveal-name"></div>
+                    <div id="reveal-score" class="reveal-score"></div>
+                  </div>
+                  <div id="reveal-tier" class="reveal-tier"></div>
+                </div>
+                <button class="secondary" id="next" type="button" disabled>
+                  CONTINUE →
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="screen screen-end hidden" id="screen-end">
+          <div class="end-kicker">RUN COMPLETE / 07 OF 07</div>
+          <div class="end-metrics">
+            <div class="end-metric">
+              <small>YOUR SCORE</small
+              ><strong
+                ><span id="end-score">000</span
+                ><span class="score-total"> / 700</span></strong
+              >
+            </div>
+            <div class="end-metric percentile" role="status" aria-live="polite">
+              <div class="percentile-line">
+                <span class="percentile-word">BETTER THAN</span
+                ><strong id="end-percentile">…</strong
+                ><span id="end-percentile-tail" class="percentile-word"
+                  >OF PLAYERS</span
+                >
+              </div>
+            </div>
+            <div class="end-metric distance">
+              <small>TRAVEL DISTANCE</small
+              ><strong
+                ><span id="end-distance">0000</span
+                ><span class="score-total"> M</span></strong
+              >
+            </div>
+          </div>
+          <div
+            id="end-reset-countdown"
+            class="reset-countdown reset-countdown-results"
+            role="timer"
+          >
+            Next Reset: <span data-next-reset>00:00:00</span>
+          </div>
+          <div
+            id="result-save-status"
+            class="result-save-status"
+            role="status"
+            aria-live="polite"
+          ></div>
+          <section class="daily-compare" aria-label="Daily score distribution">
+            <div class="compare-header">
+              <div class="compare-eyebrow" id="compare-eyebrow">
+                DAILY SCORE DISTRIBUTION
+              </div>
+            </div>
+            <div id="compare-stats" class="compare-stats">
+              <span class="compare-best-label">BEST GUESS</span> ·
+              <strong id="end-best">NONE</strong>
+            </div>
+            <div
+              class="chart-area"
+              id="chart-area"
+              role="img"
+              aria-label="Today's score distribution and your current score"
+            >
+              <div class="chart-bars" id="chart-bars"></div>
+              <div class="chart-marker" id="chart-marker">
+                <span id="chart-your-score">YOU · 0</span>
+              </div>
+            </div>
+            <div class="chart-axis">
+              <span>0</span><span>100</span><span>200</span><span>300</span
+              ><span>400</span><span>500</span><span>600</span><span>700</span>
+            </div>
+          </section>
+          <div class="end-quick-actions">
+            <button
+              type="button"
+              class="primary"
+              id="archive-toggle"
+              aria-expanded="false"
+              aria-controls="archive-panel"
+            >
+              ◷ PLAY PREVIOUS DAYS
+            </button>
+            <button type="button" class="primary hidden" id="end-packs-back">
+              ← BACK TO PACKS
+            </button>
+            <button type="button" class="secondary" id="share">
+              ↗ COPY RESULTS
+            </button>
+            <button type="button" class="secondary" id="home-btn">
+              ⌂ HOME
+            </button>
+            <button
+              type="button"
+              class="secondary packs-entry hidden"
+              id="end-packs-entry"
+            >
+              PACKS<span class="packs-beta-label">BETA</span>
+            </button>
+          </div>
+          <section
+            id="archive-panel"
+            class="archive-panel hidden"
+            aria-label="Previous daily games"
+          >
+            <h3>TODAY + PREVIOUS 7 DAYS</h3>
+            <p>
+              Choose today or an archived challenge. Completed results can be
+              viewed without another submission.
+            </p>
+            <div id="archive-status" role="status" aria-live="polite"></div>
+            <div id="archive-dates" class="archive-dates"></div>
+          </section>
+          <div class="answer-browse">
+            <h2>CHECK THE ANSWERS ↘</h2>
+            <div id="end-topics"></div>
+          </div>
+        </section>
+      </main>
+      <div class="route-bar">
+        <div
+          class="route-index"
+          id="route-index"
+          aria-label="Seven question progress"
+        >
+          <span></span><span></span><span></span><span></span><span></span
+          ><span></span><span></span>
+        </div>
+        <nav class="site-links" aria-label="Information and legal">
+          <a href="/about">How to Play &amp; About</a
+          ><a href="/privacy">Privacy Policy</a>
+        </nav>
+        <footer class="site-credit">
+          Created by <strong>miLt</strong> · Discord: miltlul · Not affiliated
+          with RobTop Games
+        </footer>
+      </div>
+    </div>
+
+    <dialog
+      id="feedback-dialog"
+      class="feedback-dialog"
+      aria-labelledby="feedback-title"
+    >
+      <form id="feedback-form">
+        <div class="feedback-header">
+          <h2 id="feedback-title">Report Error / Feedback</h2>
+          <button
+            type="button"
+            id="feedback-close"
+            class="feedback-close"
+            aria-label="Close feedback"
+          >
+            ×
+          </button>
+        </div>
+        <p>
+          Found a missing answer, incorrect rarity, bug, or have a suggestion?
+          Send a private message to the creator.
+        </p>
+        <p class="feedback-note">
+          One message per browser. You can edit your existing message instead of
+          sending another one. The game timer continues while this window is
+          open.
+        </p>
+        <label for="feedback-message">YOUR MESSAGE</label>
+        <textarea
+          id="feedback-message"
+          rows="6"
+          maxlength="2000"
+          required
+          placeholder="Tell us what could be improved..."
+        ></textarea>
+        <div class="feedback-meta">
+          <span id="feedback-status" role="status" aria-live="polite"></span
+          ><span id="feedback-count">0 / 2000</span>
+        </div>
+        <button
+          id="feedback-save"
+          type="submit"
+          class="feedback-submit"
+          disabled
+        >
+          Send feedback
+        </button>
+      </form>
+    </dialog>
+    <script>
+      const TEST_MODE = false;
+      const DESIGN_LAB_MODE = false; // Live Packs are separate from the daily and archived game.
+      const CLEAN_MODE = false; // True only on the password-protected temporary Clean Game page.
+      const ARCHIVE_MODE = false;
+      const PREVIEW_DATE = "2026-11-24";
+      const QUESTIONS = [
+        {
+          id: "name-someone-that-beat-acheron-pointercrate-aproved",
+          en: "Name someone that beat Acheron (Pointercrate Aproved)",
+          hint_en: "",
+          category: "demonlists",
+        },
+        {
+          id: "name-a-rated-level-by-bli-bpi-etzer-subwoofer-or-jonathangd",
+          en: "Name a Rated Level by BLI, BPI, Etzer, Subwoofer or JonathanGD",
+          hint_en: "",
+          category: "levels",
+        },
+        {
+          id: "pointercrate-ratedplus-top150-song-artists",
+          en: "Name an artist with a song used in a current top 150 from Pointercrate (RATED+)",
+          hint_en:
+            "Unverified NONG replacements are not included. ONLY THE MAIN SONG.",
+          category: "music",
+        },
+        {
+          id: "gd-awards-best-classic-player-nominees",
+          en: 'Name a player nominated for "Best Player" in ANY GD Awards (Classic)',
+          hint_en: "Awards of 2.0, 2.1 and 2020 through 2025",
+          category: "community",
+        },
+        {
+          id: "name-a-rated-demon-verified-by-doggie",
+          en: "Name a Rated Demon Verified by Doggie",
+          hint_en: "",
+          category: "levels",
+        },
+        {
+          id: "geometry-dash-achievements",
+          en: "Name one of the Achievements in-game",
+          hint_en: "There are over 500",
+          category: "knowledge",
+        },
+        {
+          id: "epic-rated-geometry-dash-levels",
+          en: "Name a level that has an Epic rating.",
+          hint_en:
+            "Only levels with an Epic rating count. Legendary and Mythic do not count.",
+          category: "levels",
+        },
+      ];
+      /* QUESTION_BANK_END */
+      function editDistance(a, b) {
+        const aa = Array.from(a),
+          bb = Array.from(b),
+          n = bb.length;
+        let older = null,
+          prev = Array.from({ length: n + 1 }, (_, i) => i);
+        for (let i = 1; i <= aa.length; i++) {
+          const row = [i];
+          for (let j = 1; j <= n; j++) {
+            row[j] = Math.min(
+              prev[j] + 1,
+              row[j - 1] + 1,
+              prev[j - 1] + (aa[i - 1] === bb[j - 1] ? 0 : 1),
+            );
+            if (
+              i > 1 &&
+              j > 1 &&
+              aa[i - 1] === bb[j - 2] &&
+              aa[i - 2] === bb[j - 1]
+            )
+              row[j] = Math.min(row[j], older[j - 2] + 1);
+          }
+          older = prev;
+          prev = row;
+        }
+        return prev[n];
+      }
+      // Leetspeak substitutions in usernames and level names. Unlike the normal
+      // typo matcher, this only accepts same-position letter/digit lookalikes, so
+      // "dovvin" can suggest "dovv1n" without treating "NCS 1" as "NCS 2".
+      const digitLookalikes = Object.freeze({
+        0: "o",
+        1: "il",
+        2: "z",
+        3: "e",
+        4: "a",
+        5: "s",
+        6: "g",
+        7: "t",
+        8: "b",
+        9: "g",
+      });
+      function isLeetEquivalent(a, b) {
+        const aa = Array.from(a),
+          bb = Array.from(b);
+        if (aa.length !== bb.length) return false;
+        let changes = 0;
+        for (let i = 0; i < aa.length; i++) {
+          if (aa[i] === bb[i]) continue;
+          const left = digitLookalikes[aa[i]],
+            right = digitLookalikes[bb[i]];
+          if (
+            (left && left.includes(bb[i])) ||
+            (right && right.includes(aa[i]))
+          ) {
+            changes++;
+            continue;
+          }
+          return false;
+        }
+        return changes > 0;
+      }
+      // Convert a standalone series numeral at the end of a title, not digits
+      // inside a name. This makes "The Gins 2" suggest "The Gins II", while
+      // keeping NCS 1 and NCS 2 distinct and preserving leetspeak matching.
+      const romanSeriesNumbers = new Map();
+      for (let n = 1; n <= 99; n++) {
+        let remainder = n,
+          letters = "";
+        for (const [number, symbol] of [
+          [90, "XC"],
+          [50, "L"],
+          [40, "XL"],
+          [10, "X"],
+          [9, "IX"],
+          [5, "V"],
+          [4, "IV"],
+          [1, "I"],
+        ]) {
+          while (remainder >= number) {
+            letters += symbol;
+            remainder -= number;
+          }
+        }
+        romanSeriesNumbers.set(letters, n);
+      }
+      function seriesNumeralInfo(value) {
+        const text = String(value || "").trim();
+        const match = text.match(/^(.*?)[\s._:/-]+([1-9]\d?|[ivxlcdm]{1,9})$/i);
+        if (!match) return null;
+        const base = answerKey(match[1].replace(/^(?:the|an|a)\s+/i, ""));
+        if (base.length < 3) return null;
+        const token = match[2].toUpperCase(),
+          isArabic = /^[1-9]\d?$/.test(token);
+        const number = isArabic ? Number(token) : romanSeriesNumbers.get(token);
+        return number && number <= 99 ? { base, number, isArabic } : null;
+      }
+      function isEditorTriggerQuestion(q) {
+        const prompt = String(q?.en || "");
+        return /\btriggers?\b/i.test(prompt) && /\beditor\b/i.test(prompt);
+      }
+      function triggerBase(q, raw) {
+        return isEditorTriggerQuestion(q)
+          ? String(raw)
+              .trim()
+              .replace(/\s+triggers?\s*$/i, "")
+              .trim()
+          : String(raw);
+      }
+      const answerKey = (s) =>
+        String(s || "")
+          .normalize("NFKD")
+          .replace(/\p{M}/gu, "")
+          .toLowerCase()
+          .replace(/[^\p{L}\p{N}]/gu, "");
+      /**
+       * Treat bracketed labels at the very beginning or end of an answer as
+       * optional metadata. Preserve parentheses within the actual level title.
+       * Examples: "[Oldest] Death Corridor", "Death Corridor [old]",
+       * "(Legacy) Death Corridor [2.1]" -> "Death Corridor".
+       */
+      function edgeLabelParts(raw) {
+        let value = String(raw || "").trim();
+        const labels = [];
+        const leading =
+          /^(?:\[([^\]\r\n]{1,48})\]|\(([^()\r\n]{1,48})\)|\{([^{}\r\n]{1,48})\})\s*/u;
+        const trailing =
+          /\s*(?:\[([^\]\r\n]{1,48})\]|\(([^()\r\n]{1,48})\)|\{([^{}\r\n]{1,48})\})$/u;
+        for (let i = 0; i < 10; i++) {
+          const first = value.match(leading);
+          if (first) {
+            labels.push(first.slice(1).find(Boolean));
+            value = value.slice(first[0].length).trim();
+          }
+          const last = value.match(trailing);
+          if (last) {
+            labels.push(last.slice(1).find(Boolean));
+            value = value.slice(0, -last[0].length).trim();
+          }
+          if (!first && !last) break;
+        }
+        return { base: value, labels };
+      }
+      function withoutEdgeLabels(raw) {
+        return edgeLabelParts(raw).base;
+      }
+      function reorderedEdgeLabelKey(raw) {
+        const { base, labels } = edgeLabelParts(raw);
+        if (!base || !labels.length) return "";
+        return (
+          answerKey(base) +
+          "#" +
+          labels.map(answerKey).filter(Boolean).sort().join("#")
+        );
+      }
+      function optionalLabelKeys(q, value) {
+        const full = triggerBase(q, value).trim();
+        const stripped = withoutEdgeLabels(full);
+        return stripped && stripped !== full ? wordingKeys(q, stripped) : [];
+      }
+
+      const triggerTerms = {
+        rotation: "rotate",
+        rotating: "rotate",
+        rotates: "rotate",
+        movement: "move",
+        moving: "move",
+        moves: "move",
+        scaling: "scale",
+        scales: "scale",
+        animation: "animate",
+        animating: "animate",
+        animations: "animate",
+        spawning: "spawn",
+        spawns: "spawn",
+        toggling: "toggle",
+        toggles: "toggle",
+        teleportation: "teleport",
+        teleporting: "teleport",
+        shaking: "shake",
+        following: "follow",
+        counting: "count",
+        collision: "collision",
+        collisions: "collision",
+        coloring: "color",
+        colouring: "color",
+        colour: "color",
+        fading: "fade",
+        tinting: "tint",
+        pulsing: "pulse",
+        reversing: "reverse",
+        randomization: "random",
+        randomisation: "random",
+        resetting: "reset",
+      };
+      function wordingKeys(q, value) {
+        let base = triggerBase(q, value).trim().toLowerCase();
+        // Keep the full name, but also accept omitted leading English articles.
+        const forms = [base, base.replace(/^(?:the|an|a)\s+/i, "")];
+        if (isEditorTriggerQuestion(q)) {
+          for (const form of [...forms]) {
+            forms.push(
+              form.replace(/[a-z]+/g, (w) =>
+                Object.prototype.hasOwnProperty.call(triggerTerms, w)
+                  ? triggerTerms[w]
+                  : w,
+              ),
+            );
+          }
+        }
+        return [...new Set(forms.map(answerKey).filter(Boolean))];
+      }
+      // Known artist handles are equivalent, but only in music/artist questions.
+      function isMusicQuestion(q) {
+        return (
+          q?.category === "music" ||
+          /\b(?:artists?|composers?|songs?|music|soundtracks?|newgrounds|djs?)\b/i.test(
+            String(q?.en || ""),
+          )
+        );
+      }
+      function artistAliasPair(q, value) {
+        return (
+          isMusicQuestion(q) && ["creo", "creomusic"].includes(answerKey(value))
+        );
+      }
+      // Player aliases are only indexed for eligible answers in player questions.
+      function isPlayerQuestion(q) {
+        return (
+          q?.auto_source === "pointercrate-acheron" ||
+          q?.category === "players" ||
+          /\b(?:players?|victors?|verifiers?|who\s+(?:beat|verified|completed))\b/i.test(
+            String(q?.en || ""),
+          )
+        );
+      }
+      function zoeAlias(q, answer) {
+        return isPlayerQuestion(q) && answerKey(answer.name) === "zoe";
+      }
+      function answerNames(q, answer) {
+        const names = [answer.name, ...(answer.aliases || [])];
+        if (names.some((n) => artistAliasPair(q, n)))
+          names.push("Creo", "CreoMusic");
+        if (zoeAlias(q, answer)) names.push("Paqoe");
+        return [...new Set(names)];
+      }
+      const answerIndex = new WeakMap();
+      function indexedAnswers(q) {
+        if (answerIndex.has(q)) return answerIndex.get(q);
+        const entries = q.answers.map((answer) => {
+          const names = answerNames(q, answer);
+          return {
+            answer,
+            names,
+            keys: [...new Set(names.flatMap((n) => wordingKeys(q, n)))],
+            optionalKeys: [
+              ...new Set(names.flatMap((n) => optionalLabelKeys(q, n))),
+            ],
+          };
+        });
+        answerIndex.set(q, entries);
+        return entries;
+      }
+      function fuzzyLimit(length) {
+        return length <= 3
+          ? 0
+          : length === 4
+            ? 1
+            : length <= 7
+              ? 2
+              : length <= 12
+                ? 3
+                : length <= 19
+                  ? 4
+                  : 5;
+      }
+      function findAnswer(q, raw) {
+        const lowered = String(raw).trim().toLowerCase();
+        if (!lowered) return null;
+        const entries = indexedAnswers(q);
+        // Exact canonical names always take priority, even when another answer has a similar alias.
+        const canonical = q.answers.find(
+          (a) => a.name.toLowerCase() === lowered,
+        );
+        if (canonical) return { answer: canonical, corrected: false };
+        const rawKey = answerKey(raw);
+        if (!rawKey) return null;
+        const exact = entries.filter((entry) =>
+          entry.names.some((n) => answerKey(n) === rawKey),
+        );
+        if (exact.length === 1) {
+          const answer = exact[0].answer;
+          return {
+            answer,
+            corrected:
+              (artistAliasPair(q, raw) &&
+                answerKey(answer.name) === "creo" &&
+                rawKey === "creomusic") ||
+              (zoeAlias(q, answer) && rawKey === "paqoe"),
+          };
+        }
+        if (exact.length > 1) return null;
+        // If the player supplies a bracket label but puts it at the opposite end,
+        // honor that specific version before falling back to the base level name.
+        const labeledKey = reorderedEdgeLabelKey(raw);
+        if (labeledKey) {
+          const labeled = entries.filter((entry) =>
+            entry.names.some((n) => reorderedEdgeLabelKey(n) === labeledKey),
+          );
+          if (labeled.length === 1)
+            return { answer: labeled[0].answer, corrected: true };
+          if (labeled.length > 1) return null;
+        }
+        const keys = [
+          ...new Set([...wordingKeys(q, raw), ...optionalLabelKeys(q, raw)]),
+        ];
+        if (!keys.length) return null;
+        const variants = entries.filter((entry) =>
+          entry.keys.some((k) => keys.includes(k)),
+        );
+        if (variants.length === 1)
+          return { answer: variants[0].answer, corrected: false };
+        if (variants.length > 1) return null;
+        // Exact match after dropping edge labels, before fuzzy matching.
+        // When several versions share a base title, prefer the lower-point
+        // (more recognizable) one. Never award a random Deep Cut for an
+        // unspecified version such as just "Death Corridor".
+        const withoutLabels = entries.filter((entry) =>
+          entry.optionalKeys.some((k) => keys.includes(k)),
+        );
+        if (withoutLabels.length) {
+          withoutLabels.sort(
+            (a, b) =>
+              a.answer.points - b.answer.points ||
+              a.answer.name.length - b.answer.name.length ||
+              a.answer.name.localeCompare(b.answer.name),
+          );
+          return { answer: withoutLabels[0].answer, corrected: true };
+        }
+        // A standalone Arabic sequel number can represent the same numeral
+        // written in Roman form. Never change an unrelated numerical value, and
+        // never choose between two matching stored answers.
+        const numberTyped = seriesNumeralInfo(triggerBase(q, raw));
+        if (numberTyped) {
+          const romanMatches = entries.filter((entry) =>
+            entry.names.some((name) => {
+              const numbered = seriesNumeralInfo(triggerBase(q, name));
+              return (
+                numbered &&
+                numbered.base === numberTyped.base &&
+                numbered.number === numberTyped.number &&
+                numbered.isArabic !== numberTyped.isArabic
+              );
+            }),
+          );
+          if (romanMatches.length === 1)
+            return { answer: romanMatches[0].answer, corrected: true };
+          if (romanMatches.length > 1) return null;
+        }
+        // Exact letter-to-number lookalikes have a better claim than a generic
+        // edit-distance guess. If two distinct answers fit, do not auto-pick.
+        const leet = entries.filter((entry) =>
+          keys.some((a) =>
+            [...entry.keys, ...entry.optionalKeys].some((b) =>
+              isLeetEquivalent(a, b),
+            ),
+          ),
+        );
+        if (leet.length === 1)
+          return { answer: leet[0].answer, corrected: true };
+        if (leet.length > 1) return null;
+        let best = null,
+          bestDistance = Infinity,
+          tied = false;
+        for (const entry of entries) {
+          let closest = Infinity;
+          for (const a of keys)
+            for (const b of [...entry.keys, ...entry.optionalKeys]) {
+              const al = Array.from(a).length,
+                bl = Array.from(b).length;
+              // Don't guess short names or change meaningful digits (e.g. NCS 1 into NCS 2).
+              const limit = fuzzyLimit(Math.min(al, bl));
+              if (
+                !limit ||
+                Math.abs(al - bl) > limit ||
+                Math.abs(al - bl) > bestDistance
+              )
+                continue;
+              if (
+                (a.match(/\p{N}+/gu) || []).join("|") !==
+                (b.match(/\p{N}+/gu) || []).join("|")
+              )
+                continue;
+              const d = editDistance(a, b);
+              if (d <= limit && d / Math.max(al, bl) <= 0.4)
+                closest = Math.min(closest, d);
+            }
+          if (closest < bestDistance) {
+            bestDistance = closest;
+            best = entry.answer;
+            tied = false;
+          } else if (
+            Number.isFinite(closest) &&
+            closest === bestDistance &&
+            best !== entry.answer
+          )
+            tied = true;
+        }
+        // Suggestions still require Enter again. Never guess between equally close answers.
+        return best && !tied ? { answer: best, corrected: true } : null;
+      }
+
+      ("use strict");
+      const $ = (id) => document.getElementById(id);
+      const escapeHtml = (value) =>
+        String(value ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      const limitSeconds = 30;
+      const tierDefs = {
+        10: ["COMMON", "#e3eaf1"],
+        30: ["SCHOOLER", "#80cff9"],
+        60: ["RARE", "#ff8c9e"],
+        85: ["DEEP CUT", "#bc95ff"],
+        100: ["1 IN A DASHLLION", "#fce37d"],
+      };
+      // Each rarity checkpoint is positioned exactly ten meters per point.
+      const metersForPoints = (points) => points * 10;
+      const visibleCheckpoints = [10, 30, 60, 85];
+      // World-space visual spacing is independent of meter values. This keeps the
+      // scoreboard truthful (points × 10m) while giving each rarity its own stretch
+      // of terrain and letting the cube land exactly on the corresponding marker.
+      const checkpointPositions = [
+        [0, 0],
+        [100, 380],
+        [300, 865],
+        [600, 1420],
+        [850, 1970],
+        [1000, 2440],
+      ];
+      const smootherstep = (t) => {
+        t = Math.max(0, Math.min(1, t));
+        return t * t * t * (t * (t * 6 - 15) + 10);
+      };
+      function worldXForMeters(meters) {
+        const scale = Math.max(0.68, Math.min(1, W / 900));
+        for (let i = 1; i < checkpointPositions.length; i++) {
+          const [endMeters, endX] = checkpointPositions[i];
+          if (meters <= endMeters) {
+            const [startMeters, startX] = checkpointPositions[i - 1];
+            return (
+              (startX +
+                ((endX - startX) * (Math.max(0, meters) - startMeters)) /
+                  (endMeters - startMeters)) *
+              scale
+            );
+          }
+        }
+        return checkpointPositions.at(-1)[1] * scale;
+      }
+      const sound = (() => {
+        let context = null,
+          bus = null,
+          welcomePlayed = false;
+        function init() {
+          try {
+            const Audio = window.AudioContext || window.webkitAudioContext;
+            if (!Audio) return false;
+            if (!context) {
+              context = new Audio();
+              bus = context.createGain();
+              bus.gain.value = 0.34;
+              bus.connect(context.destination);
+            }
+            if (
+              context.state === "suspended" ||
+              context.state === "interrupted"
+            )
+              context.resume().catch(() => {});
+            return context.state === "running";
+          } catch {
+            return false;
+          }
+        }
+        function tone(at, freq, endFreq, duration, volume, type = "sine") {
+          const osc = context.createOscillator(),
+            gain = context.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, at);
+          osc.frequency.exponentialRampToValueAtTime(endFreq, at + duration);
+          gain.gain.setValueAtTime(0.0001, at);
+          gain.gain.exponentialRampToValueAtTime(
+            volume,
+            at + Math.min(0.018, duration / 4),
+          );
+          gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+          osc.connect(gain);
+          gain.connect(bus);
+          osc.onended = () => {
+            osc.disconnect();
+            gain.disconnect();
+          };
+          osc.start(at);
+          osc.stop(at + duration + 0.01);
+        }
+        function play(kind, points = 0) {
+          if (document.hidden || !init()) return;
+          try {
+            const t = context.currentTime + 0.006;
+            if (kind === "correct") {
+              switch (points) {
+                case 10: // One soft, rounded confirmation pop.
+                  tone(t, 420, 350, 0.115, 0.115, "sine");
+                  tone(t + 0.008, 700, 490, 0.075, 0.025, "triangle");
+                  break;
+                case 30: // Two clear, ascending digital notes.
+                  tone(t, 523.25, 523.25, 0.12, 0.108, "triangle");
+                  tone(t + 0.105, 783.99, 783.99, 0.19, 0.083, "sine");
+                  break;
+                case 60: // Warm, bright three-note arpeggio.
+                  [392, 587.33, 987.77].forEach((f, k) =>
+                    tone(
+                      t + k * 0.075,
+                      f,
+                      f,
+                      0.27,
+                      0.092 - k * 0.012,
+                      k === 0 ? "triangle" : "sine",
+                    ),
+                  );
+                  tone(t + 0.12, 196, 293.66, 0.25, 0.028, "sine");
+                  break;
+                case 85: // A rising sweep into a soft crystalline chord.
+                  tone(t, 220, 880, 0.23, 0.053, "sine");
+                  [440, 659.25, 987.77].forEach((f, k) =>
+                    tone(t + 0.17 + k * 0.035, f, f, 0.43, 0.055, "sine"),
+                  );
+                  tone(t + 0.31, 1318.51, 1318.51, 0.32, 0.033, "triangle");
+                  break;
+                case 100: // A unique golden fanfare with a resonant bass and shimmering tail.
+                  tone(t, 130.81, 130.81, 0.55, 0.08, "sine");
+                  [523.25, 659.25, 783.99, 1046.5].forEach((f, k) =>
+                    tone(
+                      t + k * 0.085,
+                      f,
+                      f,
+                      0.44,
+                      0.082 - k * 0.009,
+                      k === 0 ? "triangle" : "sine",
+                    ),
+                  );
+                  tone(t + 0.36, 1567.98, 1567.98, 0.5, 0.038, "sine");
+                  tone(t + 0.39, 2093, 2093, 0.45, 0.022, "sine");
+                  break;
+              }
+            } else if (kind === "next") {
+              // A quick, airy transition, deliberately quieter than a correct answer.
+              tone(t, 310, 570, 0.105, 0.038, "sine");
+              tone(t + 0.045, 660, 440, 0.085, 0.025, "sine");
+            } else if (kind === "welcome") {
+              // Short original ambient opening cue, never repeated during a visit.
+              tone(t, 261.63, 261.63, 0.48, 0.05, "sine");
+              tone(t + 0.08, 392, 392, 0.4, 0.053, "sine");
+              tone(t + 0.19, 523.25, 523.25, 0.42, 0.042, "sine");
+              tone(t + 0.29, 783.99, 783.99, 0.36, 0.025, "sine");
+            } else if (kind === "land") {
+              tone(t, 150, 78, 0.105, 0.065, "sine");
+              if (points >= 85)
+                tone(
+                  t + 0.025,
+                  points === 100 ? 1046.5 : 880,
+                  points === 100 ? 1046.5 : 880,
+                  0.25,
+                  0.022,
+                );
+            } else if (kind === "timeout") {
+              tone(t, 330, 260, 0.22, 0.048);
+            } else if (kind === "finish") {
+              [523.25, 659.25, 783.99].forEach((f, k) =>
+                tone(t + k * 0.095, f, f, 0.3, 0.065),
+              );
+            }
+          } catch {} // Audio must never interrupt gameplay.
+        }
+        function welcome() {
+          if (
+            welcomePlayed ||
+            document.hidden ||
+            !context ||
+            context.state !== "running"
+          )
+            return;
+          welcomePlayed = true;
+          play("welcome");
+        }
+        function tryWelcome(event) {
+          if (welcomePlayed || document.hidden) return;
+          if (init()) welcome();
+          else if (context)
+            context
+              .resume()
+              .then(welcome)
+              .catch(() => {});
+        }
+        return { init, play, tryWelcome };
+      })();
+
+      const state = {
+        phase: "home",
+        deck: [],
+        round: 0,
+        score: 0,
+        best: 0,
+        travel: 0,
+        results: [],
+        deadline: 0,
+        jump: null,
+        returning: null,
+        goldenVisible: false,
+        goldGlow: 0,
+        deepCutActive: false,
+        deepCutGlow: 0,
+        camera: 0,
+        particles: [],
+        clock: null,
+        canAdvance: false,
+      };
+      let comparisonRequestId = 0;
+
+      const PACK_KEY = "demonlists-competitive-gd-1";
+      let packMode = false,
+        packStatus = null,
+        packQuestions = [],
+        packChecking = false;
+      const securePublic = () =>
+        packMode || (!TEST_MODE && !CLEAN_MODE && !DESIGN_LAB_MODE);
+      let remoteBusy = false;
+      async function secureAPI(action, extra = {}) {
+        const response = await fetch("/api/secure-play", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Dashllion-Play": "1",
+          },
+          credentials: "same-origin",
+          cache: "no-store",
+          body: JSON.stringify({
+            action,
+            playerId: getPlayerId(),
+            ...(packMode ? { pack: PACK_KEY } : { date: runDate() }),
+            ...extra,
+          }),
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data)
+          throw Error(data?.error || "Game service unavailable");
+        return data;
+      }
+      async function loadReviewDeck() {
+        const data = await secureAPI("review");
+        if (!Array.isArray(data.deck) || data.deck.length !== 7)
+          throw Error("Answer review unavailable");
+        return data.deck;
+      }
+      function beginSecureRun(data) {
+        if (
+          !Array.isArray(data.deck) ||
+          data.deck.length !== 7 ||
+          !Array.isArray(data.rows)
+        )
+          throw Error("Game unavailable");
+        start(data.deck, data.rows);
+      }
+      async function packAPI(route, body) {
+        const response = await fetch("/api/" + route, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Dashllion-Pack": "1",
+          },
+          body: JSON.stringify(body),
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || data?.error)
+          throw Error(data?.error || "Pack service unavailable");
+        return data;
+      }
+      function setPackTint(on) {
+        document.body.dataset.packActive = on ? "true" : "false";
+      }
+      // Reset the actual world coordinates as well as its animation state.
+      // Otherwise the cube continues from the last jump when returning to a menu.
+      function resetPackScene() {
+        clearInterval(state.clock);
+        state.travel = 0;
+        state.camera = 0;
+        state.jump = null;
+        state.returning = null;
+        state.particles = [];
+        state.goldenVisible = false;
+        state.deepCutActive = false;
+        state.goldGlow = 0;
+        state.deepCutGlow = 0;
+        state.round = 0;
+        state.score = 0;
+        state.best = 0;
+        state.results = [];
+        state.canAdvance = false;
+        document.body.classList.remove("golden-round");
+        $("distance-meter").textContent = fmt(0);
+        updateRoute();
+      }
+      function showPackCompletedLabel(completed) {
+        const tile = $("packs-first-pack");
+        tile.classList.toggle("pack-is-completed", completed === true);
+        $("pack1-completed-label").classList.toggle(
+          "hidden",
+          completed !== true,
+        );
+      }
+      async function refreshPackListCompletion() {
+        try {
+          const playerId = getPlayerId();
+          if (!playerId) return;
+          const status = await packAPI("pack-status", {
+            pack: PACK_KEY,
+            playerId,
+          });
+          showPackCompletedLabel(status.completed === true);
+          // Do not replace the active gameplay deck while the user is playing.
+          if (state.phase === "pack-list") packStatus = status;
+        } catch (error) {
+          console.warn("Could not check Pack 1 completion status", error);
+        }
+      }
+      function openPackCategories() {
+        resetPackScene();
+        packMode = false;
+        setPackTint(false);
+        showScreen("pack-categories");
+      }
+      function openPackList() {
+        resetPackScene();
+        packMode = false;
+        setPackTint(false);
+        showScreen("pack-list");
+        showPackCompletedLabel(packStatus?.completed === true);
+        refreshPackListCompletion();
+      }
+      function returnLabHome() {
+        resetPackScene();
+        packMode = false;
+        setPackTint(false);
+        showScreen("home");
+      }
+      async function showPackDetail() {
+        resetPackScene();
+        packMode = true;
+        setPackTint(true);
+        showScreen("pack-detail");
+        await refreshPackStatus();
+      }
+      async function refreshPackStatus() {
+        if (packChecking) return;
+        const button = $("pack-begin"),
+          label = $("pack-begin-label"),
+          notice = $("pack-detail-status");
+        packChecking = true;
+        button.disabled = true;
+        label.textContent = "CHECKING PACK…";
+        notice.textContent = "";
+        try {
+          const playerId = getPlayerId();
+          if (!playerId)
+            throw Error("Browser storage is required to play packs");
+          const status = await packAPI("pack-status", {
+            pack: PACK_KEY,
+            playerId,
+          });
+          if (!Array.isArray(status.deck) || status.deck.length !== 7)
+            throw Error("Pack 1 has no playable questions");
+          packStatus = status;
+          packQuestions = status.deck;
+          showPackCompletedLabel(status.completed === true);
+          label.textContent = status.completed
+            ? "SEE RESULTS"
+            : "BEGIN THE RUN";
+          button.disabled = false;
+          notice.textContent = status.completed
+            ? "Pack 1 completed · " +
+              status.score +
+              "/700 points · See results and compare with other Pack 1 players"
+            : "";
+        } catch (error) {
+          packStatus = null;
+          label.textContent = "RETRY CONNECTION";
+          button.disabled = false;
+          notice.textContent = error.message || "Pack unavailable";
+        } finally {
+          packChecking = false;
+        }
+      }
+      async function handlePackBegin() {
+        if (packChecking) return;
+        if (!packStatus) {
+          await refreshPackStatus();
+          return;
+        }
+        if (packStatus.completed) {
+          showCompletedPackResults();
+          return;
+        }
+        const button = $("pack-begin");
+        button.disabled = true;
+        $("pack-begin-label").textContent = "STARTING PACK…";
+        try {
+          const playerId = getPlayerId();
+          if (!playerId) throw Error("Browser storage unavailable");
+          const answer = await secureAPI("start");
+          if (answer.completed) {
+            await refreshPackStatus();
+            showCompletedPackResults();
+            return;
+          }
+          packQuestions = answer.deck;
+          beginSecureRun(answer);
+        } catch (error) {
+          $("pack-detail-status").textContent =
+            error.message || "Cannot begin pack";
+          $("pack-begin-label").textContent = "RETRY";
+        } finally {
+          button.disabled = false;
+        }
+      }
+      function showCompletedPackResults() {
+        if (
+          !packMode ||
+          !packStatus?.completed ||
+          !Array.isArray(packQuestions) ||
+          packQuestions.length !== 7
+        )
+          return;
+        let saved = null;
+        try {
+          saved = JSON.parse(localStorage.getItem(savedKey()) || "null");
+        } catch {}
+        const recorded = packStatus.score,
+          valid =
+            Array.isArray(saved?.results) &&
+            saved.results.length === 7 &&
+            saved.results.every(
+              (r, i) =>
+                r?.id === packQuestions[i].id && Number.isInteger(r.points),
+            ) &&
+            saved.score === recorded;
+        clearInterval(state.clock);
+        state.deck = packQuestions;
+        state.round = 6;
+        state.score = recorded || 0;
+        state.best = valid
+          ? Math.max(0, ...saved.results.map((r) => r.points))
+          : 0;
+        state.results = valid
+          ? saved.results.map((r) => ({
+              id: r.id,
+              name: r.answer || "NO ANSWER",
+              points: r.points,
+            }))
+          : packQuestions.map((q) => ({
+              id: q.id,
+              name: "PREVIOUS GUESS UNAVAILABLE",
+              points: 0,
+            }));
+        state.travel = 0;
+        state.jump = null;
+        state.returning = null;
+        state.camera = 0;
+        finish(true, !valid);
+      }
+      async function submitPackRun() {
+        if (state.phase !== "end" || submissionPending) return false;
+        submissionPending = true;
+        const notice = $("result-save-status");
+        notice.textContent = "Recording your Pack 1 score…";
+        try {
+          const playerId = getPlayerId();
+          if (!playerId) throw Error("Browser storage unavailable");
+          const results = state.results.map((row) => ({
+            id: row.id,
+            answer: row.points ? row.name : null,
+            points: row.points,
+          }));
+          if (results.length !== 7)
+            throw Error("Pack attempt has not finished");
+          const result = await packAPI("pack-submit", {
+            pack: PACK_KEY,
+            playerId,
+            results,
+          });
+          packStatus = {
+            completed: true,
+            score: result.score,
+            deck: packQuestions,
+          };
+          showPackCompletedLabel(true);
+          if (!result.alreadySubmitted) {
+            try {
+              localStorage.setItem(
+                savedKey(),
+                JSON.stringify({
+                  score: result.score,
+                  best: state.best,
+                  results,
+                }),
+              );
+            } catch {}
+          }
+          notice.textContent = result.alreadySubmitted
+            ? "Pack 1 already completed · " +
+              result.score +
+              "/700 · this attempt was not counted"
+            : "✓ Pack 1 result saved · " +
+              result.score +
+              "/700 · this pack cannot be played again";
+          return true;
+        } catch (error) {
+          notice.textContent =
+            "Could not save Pack 1 result: " + error.message + " ";
+          const retry = document.createElement("button");
+          retry.type = "button";
+          retry.className = "secondary";
+          retry.style.cssText =
+            "margin-left:12px;min-width:110px;font-size:12px;padding:8px 11px";
+          retry.textContent = "RETRY SAVE";
+          retry.onclick = () => {
+            retry.remove();
+            saveAndReview();
+          };
+          notice.append(retry);
+          return false;
+        } finally {
+          submissionPending = false;
+        }
+      }
+
+      let playerId = null,
+        runStatus = null,
+        accessChecking = false,
+        submissionPending = false;
+      const runDate = () => PREVIEW_DATE;
+      // The next daily reset is always at midnight in the game's time zone,
+      // regardless of the visitor's own time zone or clock display settings.
+      const resetClock = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "America/Sao_Paulo",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23",
+      });
+      function nextResetRemaining() {
+        const p = Object.fromEntries(
+          resetClock
+            .formatToParts(new Date())
+            .map(({ type, value }) => [type, value]),
+        );
+        const seconds =
+          86400 -
+          (Number(p.hour) * 3600 + Number(p.minute) * 60 + Number(p.second));
+        const pad = (value) => String(value).padStart(2, "0");
+        return (
+          pad(Math.floor(seconds / 3600)) +
+          ":" +
+          pad(Math.floor((seconds % 3600) / 60)) +
+          ":" +
+          pad(seconds % 60)
+        );
+      }
+      function updateNextReset() {
+        const countdown = nextResetRemaining();
+        document.querySelectorAll("[data-next-reset]").forEach((el) => {
+          if (el.textContent !== countdown) el.textContent = countdown;
+        });
+      }
+      updateNextReset();
+      setInterval(updateNextReset, 500);
+      const savedKey = (date = runDate(), archive = ARCHIVE_MODE) =>
+        packMode
+          ? "dashllion_v4_pack_public_" + PACK_KEY
+          : (archive ? "dashllion_v4_archive_" : "dashllion_v4_daily_") + date;
+      // Read both legacy storage keys. Daily results take precedence over old duplicate archives.
+      function savedCompletion(date = runDate()) {
+        for (const archive of [false, true]) {
+          try {
+            const saved = JSON.parse(
+              localStorage.getItem(savedKey(date, archive)) || "null",
+            );
+            if (saved) return saved;
+          } catch {}
+          if (packMode) break;
+        }
+        return null;
+      }
+      function locallyCompleted(date = runDate()) {
+        return !!savedCompletion(date);
+      }
+      function getPlayerId() {
+        if (playerId) return playerId;
+        try {
+          const key = "dashllion_v4_player_id";
+          let id = localStorage.getItem(key);
+          if (!id) {
+            id = crypto.randomUUID
+              ? crypto.randomUUID()
+              : Array.from(crypto.getRandomValues(new Uint8Array(24)), (n) =>
+                  n.toString(16).padStart(2, "0"),
+                ).join("");
+            localStorage.setItem(key, id);
+          }
+          if (typeof id !== "string" || id.length < 10 || id.length > 100)
+            return null;
+          playerId = id;
+          return id;
+        } catch {
+          return null;
+        }
+      }
+      function isCompleted(status = runStatus) {
+        if (packMode) return packStatus?.completed === true;
+        if (CLEAN_MODE) return false; // Private demo mode is replayable.
+        const serverDone = ARCHIVE_MODE
+          ? status?.archives?.[runDate()]?.completed
+          : status?.daily?.completed;
+        return !!serverDone || locallyCompleted();
+      }
+      function completedScore(status = runStatus) {
+        if (packMode)
+          return Number.isInteger(packStatus?.score) ? packStatus.score : null;
+        const fromServer = ARCHIVE_MODE
+          ? status?.archives?.[runDate()]?.score
+          : status?.daily?.score;
+        if (Number.isFinite(fromServer)) return fromServer;
+        const saved = savedCompletion();
+        return Number.isFinite(saved?.score) ? saved.score : null;
+      }
+      async function fetchRunStatus() {
+        const id = getPlayerId();
+        if (!id)
+          throw Error("Browser storage is needed to prevent duplicate runs.");
+        const response = await fetch("/api/player-runs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ playerId: id }),
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+        if (!response.ok) throw Error("Could not check completed games.");
+        const data = await response.json();
+        if (typeof data?.today !== "string" || !data.daily || !data.archives)
+          throw Error("Invalid completion response.");
+        runStatus = data;
+        return data;
+      }
+      function displayRunAccess() {
+        const button = $("start"),
+          label = $("start-label"),
+          archiveButton = $("home-archive-toggle"),
+          message = $("home-run-status");
+        const archiveItem = runStatus?.archives?.[runDate()];
+        const completed = isCompleted(),
+          score = completedScore();
+        const archiveUnavailable = ARCHIVE_MODE && !archiveItem?.available;
+        const dayChanged = !ARCHIVE_MODE && runStatus?.today !== runDate();
+        button.disabled = !completed && (archiveUnavailable || dayChanged);
+        if (completed) label.textContent = "SEE RESULTS";
+        else if (archiveUnavailable)
+          label.textContent = "ARCHIVED RUN UNAVAILABLE";
+        else if (dayChanged) label.textContent = "NEW DAILY RUN AVAILABLE";
+        else
+          label.textContent = ARCHIVE_MODE
+            ? "BEGIN THE ARCHIVED RUN"
+            : "BEGIN THE DAILY RUN";
+        const canBrowse = ARCHIVE_MODE || completed;
+        archiveButton.classList.toggle("hidden", !canBrowse);
+        $("home-next-reset").classList.toggle("hidden", !completed);
+        const noun = ARCHIVE_MODE ? "archived" : "daily";
+        message.textContent = completed
+          ? "You already completed the " + noun + " run"
+          : archiveUnavailable
+            ? "This archived day is no longer available."
+            : dayChanged
+              ? "The daily challenge has changed. Reload the current day."
+              : ARCHIVE_MODE
+                ? "Archived answers count toward that date’s recorded results. You can complete this archive once."
+                : "";
+        $("archive-home-label").textContent = ARCHIVE_MODE
+          ? "ARCHIVED CHALLENGE · " + runDate()
+          : "";
+      }
+      async function prepareRunAccess() {
+        if (CLEAN_MODE) {
+          // Never consult live completion status or use the public player ID.
+          runStatus = {
+            today: runDate(),
+            daily: { completed: false, score: null },
+            archives: {},
+          };
+          displayRunAccess();
+          return;
+        }
+        if (accessChecking) return;
+        accessChecking = true;
+        const btn = $("start");
+        btn.disabled = true;
+        $("start-label").textContent = "CHECKING RUN…";
+        $("home-run-status").textContent = "";
+        $("home-next-reset").classList.add("hidden");
+        $("home-archive-toggle").classList.toggle("hidden", !ARCHIVE_MODE);
+        $("archive-home-label").textContent = ARCHIVE_MODE
+          ? "ARCHIVED CHALLENGE · " + runDate()
+          : "";
+        try {
+          await fetchRunStatus();
+          displayRunAccess();
+        } catch (e) {
+          runStatus = null;
+          $("start-label").textContent = "RETRY CONNECTION";
+          btn.disabled = false;
+          $("home-archive-toggle").classList.toggle(
+            "hidden",
+            !(ARCHIVE_MODE || locallyCompleted()),
+          );
+          $("home-run-status").textContent =
+            e.message || "Unable to verify previous runs.";
+        } finally {
+          accessChecking = false;
+        }
+      }
+      async function handleStart() {
+        if (accessChecking || state.phase !== "home") return;
+        if (CLEAN_MODE) {
+          start();
+          return;
+        } // Begin freely, without checking the live run.
+        if (!runStatus) {
+          await prepareRunAccess();
+          return;
+        }
+        if (isCompleted()) {
+          showCompletedResults();
+          return;
+        }
+        const btn = $("start");
+        btn.disabled = true;
+        $("start-label").textContent = "VERIFYING RUN…";
+        try {
+          await fetchRunStatus();
+          displayRunAccess();
+          if (isCompleted()) {
+            showCompletedResults();
+            return;
+          }
+          if (btn.disabled) return;
+          if (securePublic()) {
+            const data = await secureAPI("start");
+            if (data.completed) {
+              await fetchRunStatus();
+              displayRunAccess();
+              await showCompletedResults();
+              return;
+            }
+            beginSecureRun(data);
+          } else start();
+        } catch (e) {
+          runStatus = null;
+          $("start-label").textContent = "RETRY CONNECTION";
+          btn.disabled = false;
+          $("home-run-status").textContent =
+            e.message || "Could not verify run status.";
+        }
+      }
+      // A completed run can be viewed again without a POST. The browser retains
+      // guesses from completed runs, while the server records the score.
+      async function showCompletedResults() {
+        if (!isCompleted()) return;
+        let reviewDeck = QUESTIONS;
+        if (securePublic()) {
+          try {
+            const data = await secureAPI("review");
+            reviewDeck = data.deck;
+            if (!Array.isArray(reviewDeck) || reviewDeck.length !== 7)
+              throw Error("Answer review unavailable");
+          } catch (e) {
+            $("home-run-status").textContent =
+              e.message || "Could not load results. Try again.";
+            return;
+          }
+        }
+        const saved = savedCompletion();
+        const recordedScore = completedScore();
+        const hasSavedAnswers =
+          Array.isArray(saved?.results) &&
+          saved.results.length === QUESTIONS.length &&
+          saved.results.every(
+            (row, i) =>
+              row?.id === QUESTIONS[i]?.id &&
+              Number.isInteger(row.points) &&
+              row.points >= 0 &&
+              row.points <= 100,
+          ) &&
+          (recordedScore === null || saved.score === recordedScore);
+        clearInterval(state.clock);
+        state.deck = reviewDeck;
+        state.round = 6;
+        state.score =
+          recordedScore ?? (Number.isFinite(saved?.score) ? saved.score : 0);
+        state.best = hasSavedAnswers
+          ? Math.max(0, ...saved.results.map((row) => row.points))
+          : 0;
+        state.results = hasSavedAnswers
+          ? saved.results.map((row) => ({
+              id: row.id,
+              name: row.answer || "NO ANSWER",
+              points: row.points,
+            }))
+          : QUESTIONS.map((q) => ({
+              id: q.id,
+              name: "PREVIOUS GUESS UNAVAILABLE",
+              points: 0,
+            }));
+        state.travel = 0;
+        state.jump = null;
+        state.returning = null;
+        state.camera = 0;
+        finish(true, !hasSavedAnswers);
+      }
+
+      // Color interpolation keeps the whole scrolling world in sync with the
+      // golden-round tint, rather than only putting a yellow overlay over a blue sky.
+      function mixRgb(a, b, t) {
+        const x = a.match(/[a-f\d]{2}/gi).map((n) => parseInt(n, 16));
+        const y = b.match(/[a-f\d]{2}/gi).map((n) => parseInt(n, 16));
+        return (
+          "rgb(" +
+          x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(",") +
+          ")"
+        );
+      }
+      function mixRgba(a, b, t, alpha) {
+        return mixRgb(a, b, t)
+          .replace("rgb(", "rgba(")
+          .replace(")", "," + alpha + ")");
+      }
+      // This light holds after landing. It begins fading at the exact moment
+      // the cube starts returning, independent of the jump animation's timing.
+      function deepCutSpotlight() {
+        return state.phase === "play" ? state.deepCutGlow : 0;
+      }
+      const fmt = (n, d = 4) => String(Math.round(n)).padStart(d, "0");
+      const safeMatches = (match) =>
+        match && !match.corrected ? match.answer : null;
+      function showScreen(name) {
+        [
+          "home",
+          "play",
+          "end",
+          "pack-categories",
+          "pack-list",
+          "pack-detail",
+        ].forEach((x) => {
+          const el = $("screen-" + x);
+          el.classList.toggle("hidden", x !== name);
+        });
+        state.phase = name;
+        document.body.dataset.phase = name;
+        updateRoute();
+        window.scrollTo({ top: 0, behavior: "instant" });
+      }
+      function updateRoute() {
+        const done = state.phase === "end" ? 7 : state.results.length;
+        const nodes = $("route-index").children;
+        for (let i = 0; i < 7; i++) {
+          nodes[i].classList.toggle("done", i < done);
+          nodes[i].classList.toggle(
+            "active",
+            state.phase === "play" && state.round === i && i >= done,
+          );
+        }
+      }
+      function start(deck = QUESTIONS, previousRows = []) {
+        ++comparisonRequestId; // Discard any stale read-only graph response on replay.
+        if (!Array.isArray(deck) || deck.length !== 7) {
+          alert(
+            "This seven-question run is unavailable. Reload the page and try again.",
+          );
+          return;
+        }
+        clearInterval(state.clock);
+        Object.assign(state, {
+          round: 0,
+          score: 0,
+          best: 0,
+          travel: 0,
+          results: [],
+          jump: null,
+          returning: null,
+          goldenVisible: false,
+          goldGlow: 0,
+          deepCutActive: false,
+          deepCutGlow: 0,
+          camera: 0,
+          particles: [],
+          canAdvance: false,
+        });
+        document.body.classList.remove("golden-round");
+        state.deck = deck;
+        state.results = previousRows.map((row) => ({
+          id: row.id,
+          name: row.answer || "NO ANSWER",
+          points: row.points,
+        }));
+        state.score = state.results.reduce((sum, row) => sum + row.points, 0);
+        state.best = Math.max(0, ...state.results.map((row) => row.points));
+        state.round = Math.min(6, state.results.length);
+        remoteBusy = false;
+        sound.init();
+        showScreen("play");
+        if (state.results.length === 7) finish();
+        else loadRound();
+      }
+      function loadRound() {
+        state.canAdvance = false;
+        // Every question launches from 0m. Cumulative points are tracked
+        // independently beside the question number and on the results screen.
+        state.travel = 0;
+        state.camera = 0;
+        state.jump = null;
+        state.returning = null;
+        state.goldenVisible = false;
+        state.deepCutActive = false;
+        state.particles = [];
+        // The previous round's lighting already began fading at the start
+        // of its cube return. Keep new rounds in their default palette.
+        document.body.classList.remove("golden-round");
+        $("round-num").textContent = fmt(state.round + 1, 2);
+        $("run-points").textContent = String(state.score);
+        const question = state.deck[state.round];
+        $("question").textContent = question.en;
+        $("hint").textContent = question.hint_en || "";
+        if (
+          question.id === "geometry-dash-achievements" ||
+          /^name one of the achievements in-game[.!]?$/i.test(
+            String(question.en || "").trim(),
+          )
+        ) {
+          const clarification = document.createElement("span");
+          clarification.className = "achievement-clarification";
+          clarification.textContent =
+            "Name of the Achievement, not what you need to do";
+          $("hint").append(document.createTextNode(" "), clarification);
+        }
+        $("distance-meter").textContent = fmt(0);
+        $("answer-input").value = "";
+        $("answer-input").disabled = false;
+        $("submit").disabled = false;
+        $("submit-area").classList.remove("hidden");
+        $("reveal").classList.add("hidden");
+        clearAnswerFeedback();
+        $("seconds").textContent = "30.0";
+        $("time-fill").style.width = "100%";
+        clearInterval(state.clock);
+        if (securePublic()) {
+          $("answer-input").disabled = true;
+          $("submit").disabled = true;
+          openRemoteRound(state.round);
+        } else {
+          state.deadline = performance.now() + limitSeconds * 1000;
+          state.clock = setInterval(tick, 60);
+        }
+        updateRoute();
+        $("answer-input").focus({ preventScroll: true });
+      }
+      async function openRemoteRound(index) {
+        if (state.phase !== "play" || state.round !== index || state.canAdvance)
+          return;
+        try {
+          const data = await secureAPI("round", { round: index });
+          if (
+            state.phase !== "play" ||
+            state.round !== index ||
+            state.canAdvance
+          )
+            return;
+          if (data.row) {
+            resolve(
+              data.row.points
+                ? { name: data.row.answer, points: data.row.points }
+                : null,
+            );
+            return;
+          }
+          if (!Number.isFinite(data.remaining))
+            throw Error("Round unavailable");
+          state.deadline = performance.now() + Math.max(0, data.remaining);
+          $("answer-input").disabled = false;
+          $("submit").disabled = false;
+          clearAnswerFeedback();
+          $("answer-input").focus({ preventScroll: true });
+          clearInterval(state.clock);
+          state.clock = setInterval(tick, 60);
+          tick();
+        } catch (e) {
+          const popup = $("answer-feedback");
+          popup.textContent = "Connection interrupted. Reconnecting…";
+          popup.classList.add("shown", "wrong");
+          setTimeout(() => openRemoteRound(index), 1200);
+        }
+      }
+      async function remoteGuess(timeout = false) {
+        if (remoteBusy || state.phase !== "play" || state.canAdvance) return;
+        const index = state.round,
+          input = $("answer-input"),
+          raw = input.value.trim();
+        remoteBusy = true;
+        $("submit").disabled = true;
+        try {
+          const data = await secureAPI("guess", { round: index, raw, timeout });
+          if (
+            state.phase !== "play" ||
+            state.round !== index ||
+            state.canAdvance
+          )
+            return;
+          if (data.row) {
+            resolve(
+              data.row.points
+                ? { name: data.row.answer, points: data.row.points }
+                : null,
+            );
+            return;
+          }
+          if (Number.isFinite(data.remaining)) {
+            state.deadline = performance.now() + data.remaining;
+            return;
+          }
+          if (data.corrected) {
+            showAnswerFeedback("autocorrect", raw, data.corrected);
+            input.value = data.corrected;
+            input.focus();
+            input.setSelectionRange(input.value.length, input.value.length);
+          } else if (data.wrong) showAnswerFeedback("wrong");
+          else throw Error("Could not validate guess");
+        } catch (e) {
+          const popup = $("answer-feedback");
+          popup.textContent = "Connection interrupted. Try again.";
+          popup.classList.add("shown", "wrong");
+          // Avoid a tight retry loop once the round has timed out.
+          if (timeout) state.deadline = performance.now() + 1000;
+        } finally {
+          remoteBusy = false;
+          if (state.phase === "play" && !state.canAdvance)
+            $("submit").disabled = false;
+        }
+      }
+      function tick() {
+        if (state.phase !== "play" || state.canAdvance) return;
+        const secs = Math.max(0, (state.deadline - performance.now()) / 1000);
+        $("seconds").textContent = secs.toFixed(1);
+        $("seconds").style.color = secs < 6 ? "#ff8c9e" : "";
+        $("time-fill").style.width = (secs / limitSeconds) * 100 + "%";
+        $("time-fill").style.background = secs < 6 ? "#ff8c9e" : "";
+        if (secs <= 0) {
+          if (securePublic()) {
+            remoteGuess(true);
+            return;
+          }
+          clearInterval(state.clock);
+          const raw = $("answer-input").value.trim(),
+            q = state.deck[state.round],
+            match = raw ? findAnswer(q, raw) : null;
+          resolve(safeMatches(match));
+        }
+      }
+      // Feedback floats above the answer entry without taking any layout space.
+      // Use escaped text for autocorrect suggestions to avoid HTML injection.
+      function clearAnswerFeedback() {
+        const popup = $("answer-feedback");
+        popup.classList.remove("shown", "wrong", "autocorrect");
+        popup.textContent = "";
+      }
+      function showAnswerFeedback(kind, raw = "", corrected = "") {
+        const popup = $("answer-feedback");
+        popup.classList.remove("wrong", "autocorrect");
+        popup.classList.add(kind);
+        if (kind === "wrong") {
+          popup.textContent = "Not recognized. Try Again.";
+        } else {
+          popup.innerHTML =
+            '<span class="feedback-label">Autocorrected:</span> ' +
+            '<span class="feedback-wrong">"' +
+            escapeHtml(raw) +
+            '"</span> ' +
+            '<span class="feedback-arrow">-&gt;</span> ' +
+            '<span class="feedback-correct">"' +
+            escapeHtml(corrected) +
+            '"</span>';
+        }
+        popup.classList.add("shown");
+      }
+      function submit(ev) {
+        ev.preventDefault();
+        if (state.phase !== "play" || state.canAdvance) return;
+        const input = $("answer-input"),
+          raw = input.value.trim(),
+          q = state.deck[state.round];
+        if (!raw) {
+          showAnswerFeedback("wrong");
+          return;
+        }
+        if (securePublic()) {
+          remoteGuess();
+          return;
+        }
+        const match = findAnswer(q, raw);
+        if (!match) {
+          showAnswerFeedback("wrong");
+          return;
+        }
+        if (match.corrected) {
+          showAnswerFeedback("autocorrect", raw, match.answer.name);
+          input.value = match.answer.name;
+          input.focus();
+          input.setSelectionRange(input.value.length, input.value.length);
+          return;
+        }
+        resolve(match.answer);
+      }
+      function resolve(answer) {
+        if (state.phase !== "play" || state.canAdvance) return;
+        state.canAdvance = true;
+        clearInterval(state.clock);
+        const points = answer?.points || 0;
+        const name = answer?.name || "NO ANSWER";
+        sound.play(points ? "correct" : "timeout", points);
+        state.results.push({ id: state.deck[state.round].id, name, points });
+        state.score += points;
+        state.best = Math.max(state.best, points);
+        $("run-points").textContent = String(state.score);
+        state.goldenVisible = points === 100;
+        state.deepCutActive = points === 85;
+        document.body.classList.toggle("golden-round", points === 100);
+        $("reveal-name").textContent = name;
+        $("reveal-score").innerHTML = "+" + points + " <small>PTS</small>";
+        $("reveal-score").style.color = points
+          ? tierDefs[points][1]
+          : "#a8bac6";
+        $("reveal-tier").textContent = points
+          ? tierDefs[points][0]
+          : "NO POINTS";
+        $("reveal-tier").style.color = points ? tierDefs[points][1] : "#ff95a7";
+        clearAnswerFeedback();
+        $("submit-area").classList.add("hidden");
+        $("reveal").classList.remove("hidden");
+        $("next").disabled = !!points;
+        $("next").textContent =
+          state.round === 6 ? "VIEW RESULTS →" : "NEXT SECTOR →";
+        if (!points) {
+          $("next").disabled = false;
+          updateRoute();
+          return;
+        }
+        const travel = metersForPoints(points);
+        const startAt = performance.now();
+        // A grounded anticipation, gravity-shaped flight and visible impact
+        // make this feel like a jump instead of a dragged horizontal translation.
+        const windup = 105,
+          flight = 670 + points * 6.6,
+          impact = 155;
+        state.jump = {
+          from: 0,
+          to: travel,
+          start: startAt,
+          windup,
+          flight,
+          impact,
+          duration: windup + flight + impact,
+          points,
+          launched: false,
+          landed: false,
+        };
+        updateRoute();
+      }
+      function next() {
+        if (!state.canAdvance || $("next").disabled || state.returning) return;
+        if (state.round === 6) return finish();
+        sound.play("next");
+        state.canAdvance = false;
+        $("next").disabled = true;
+        if (state.travel <= 0) {
+          state.round++;
+          loadRound();
+          return;
+        }
+        // Start both rarity lighting fades at the exact moment the cube begins
+        // its return, not after it arrives back at the starting position.
+        // Golden canvas colors and the CSS overlay share the same trigger.
+        state.goldenVisible = false;
+        state.deepCutActive = false;
+        document.body.classList.remove("golden-round");
+        // Retrieve the cube and the camera together. The next round and timer
+        // still begin only after the return animation completes.
+        state.returning = {
+          from: state.travel,
+          cameraFrom: state.camera,
+          start: performance.now(),
+          duration: Math.min(1100, 620 + state.travel * 0.3),
+        };
+      }
+      function finish(review = false, answersUnavailable = false) {
+        if (!review) sound.play("finish");
+        state.deepCutActive = false;
+        document.body.classList.remove("golden-round");
+        clearInterval(state.clock);
+        showScreen("end");
+        $("end-reset-countdown").classList.toggle("hidden", packMode);
+        $("archive-toggle").classList.toggle("hidden", packMode);
+        $("end-packs-back").classList.toggle("hidden", !packMode);
+        $("end-packs-entry").classList.toggle("hidden", packMode);
+        $("compare-eyebrow").textContent = packMode
+          ? "PACK 1 SCORE DISTRIBUTION"
+          : "DAILY SCORE DISTRIBUTION";
+        $("home-btn").textContent = "⌂ HOME";
+        updateRoute();
+        $("end-score").textContent = fmt(state.score, 3);
+        $("end-best").textContent = state.best
+          ? tierDefs[state.best][0]
+          : "NONE";
+        $("end-best").style.color = state.best
+          ? tierDefs[state.best][1]
+          : "#91cfd8";
+        $("end-distance").textContent = fmt(state.score * 10);
+        if (securePublic() && !review)
+          $("end-topics").textContent =
+            "Saving your score before revealing answers…";
+        else renderEndTopics(answersUnavailable);
+        if (review) {
+          // Read-only result review: never POST a previously completed run.
+          $("result-save-status").textContent = answersUnavailable
+            ? "Your previous guesses are not saved on this device. You can still browse all accepted answers."
+            : "";
+          loadDailyComparison();
+        } else {
+          saveAndReview();
+        }
+      }
+      async function saveAndReview() {
+        const originalMode = packMode,
+          originalDeck = state.deck;
+        const stillHere = () =>
+          state.phase === "end" &&
+          packMode === originalMode &&
+          state.deck === originalDeck;
+        const saved = await submitRun();
+        if (!stillHere()) return;
+        if (saved && securePublic()) {
+          try {
+            const deck = await loadReviewDeck();
+            if (!stillHere()) return;
+            state.deck = deck;
+            if (packMode) {
+              packQuestions = deck;
+              if (packStatus) packStatus.deck = deck;
+            }
+            renderEndTopics(false);
+          } catch (e) {
+            if (stillHere())
+              $("end-topics").textContent =
+                "Score saved. Reopen your completed run to see its answers.";
+          }
+        }
+        if (state.phase === "end" && packMode === originalMode)
+          loadDailyComparison();
+      }
+      function renderEndTopics(answersUnavailable = false) {
+        // Match the public answer browser: one compact rarity-sorted column,
+        // selected guesses highlighted, and a full-width search per question.
+        const topics = state.results
+          .map((r, i) => {
+            const q = state.deck[i];
+            const count = q.answers?.length || 0;
+            const answerColor = tierDefs[r.points]?.[1] || "#a6b8cd";
+            const answerTier = tierDefs[r.points]?.[0] || "NO POINTS";
+            const heading = escapeHtml(q.en);
+            const chosen = escapeHtml(r.name);
+            const picked = answersUnavailable
+              ? "PREVIOUS GUESS NOT SAVED ON THIS DEVICE"
+              : chosen +
+                ' · <span class="topic-earned" style="color:' +
+                answerColor +
+                '">' +
+                answerTier +
+                "</span> · +" +
+                r.points;
+            return (
+              '<details class="topic" data-topic="' +
+              i +
+              '">' +
+              '<summary><span class="serial">' +
+              fmt(i + 1, 2) +
+              "</span>" +
+              '<span class="topic-labels"><strong class="topic-name">' +
+              heading +
+              "</strong>" +
+              '<small class="topic-picked">' +
+              picked +
+              "</small></span>" +
+              '<span class="topic-chevron" aria-hidden="true">⌄</span></summary>' +
+              '<div class="topic-body"><div class="topic-sub"><strong>POSSIBLE ANSWERS</strong><span>' +
+              count.toLocaleString("en-US") +
+              "</span></div>" +
+              '<label class="topic-search">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5" stroke-linecap="round"/></svg>' +
+              '<input type="search" data-search="' +
+              i +
+              '" placeholder="Search answers..." aria-label="Search answers for ' +
+              heading +
+              '" autocomplete="off" spellcheck="false"></label>' +
+              '<div class="answers" data-answers="' +
+              i +
+              '"></div>' +
+              '<button type="button" class="show-more hidden" data-more="' +
+              i +
+              '">SHOW MORE ANSWERS</button>' +
+              "</div></details>"
+            );
+          })
+          .join("");
+        $("end-topics").innerHTML = topics;
+        for (let i = 0; i < state.results.length; i++) fillAnswers(i, false);
+      }
+      async function submitRun() {
+        if (packMode) return submitPackRun();
+        if (DESIGN_LAB_MODE) {
+          $("result-save-status").textContent =
+            "Design Lab preview · daily result not recorded";
+          return false;
+        }
+        if (CLEAN_MODE || TEST_MODE) return false; // Private previews never POST public scores or write completions.
+        if (state.phase !== "end" || submissionPending) return false;
+        submissionPending = true;
+        const notice = $("result-save-status");
+        notice.textContent =
+          "Recording " + (ARCHIVE_MODE ? "archived" : "daily") + " result…";
+        let saved = false;
+        try {
+          const id = getPlayerId();
+          if (!id) throw Error("Browser player ID unavailable.");
+          const results = state.results.map((row) => ({
+            id: row.id,
+            answer: row.points ? row.name : null,
+            points: row.points,
+          }));
+          if (results.length !== 7) throw Error("Run has not finished.");
+          const response = await fetch(
+            "/api/daily-results?date=" + encodeURIComponent(runDate()),
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                date: runDate(),
+                playerId: id,
+                results,
+                archive: ARCHIVE_MODE,
+              }),
+              cache: "no-store",
+              credentials: "same-origin",
+            },
+          );
+          const data = await response.json().catch(() => null);
+          if (!response.ok || !data?.ok)
+            throw Error(data?.error || "Score submission failed.");
+          saved = true;
+          const prior = data.alreadySubmitted === true;
+          const recorded = Number.isInteger(data.score)
+            ? data.score
+            : state.score;
+          if (!prior) {
+            try {
+              localStorage.setItem(
+                savedKey(),
+                JSON.stringify({
+                  score: recorded,
+                  best: state.best,
+                  last: state.results.at(-1)?.points || 0,
+                  results,
+                }),
+              );
+            } catch {
+              /* The server record is authoritative. */
+            }
+          }
+          if (runStatus) {
+            if (ARCHIVE_MODE)
+              runStatus.archives[runDate()] = {
+                available: true,
+                completed: true,
+                score: recorded,
+              };
+            else runStatus.daily = { completed: true, score: recorded };
+          }
+          notice.textContent = prior
+            ? "This " +
+              (ARCHIVE_MODE ? "archived" : "daily") +
+              " run was already recorded (" +
+              recorded +
+              "/700). Your new attempt was not counted."
+            : "✓ " +
+              (ARCHIVE_MODE ? "Archived" : "Daily") +
+              " result recorded · " +
+              recorded +
+              "/700. This run cannot be submitted again.";
+        } catch (e) {
+          // Standard submission is still automatic, but failed saves have no manual retry UI.
+          notice.textContent = "Could not save result: " + e.message + " ";
+          const retry = document.createElement("button");
+          retry.type = "button";
+          retry.className = "secondary";
+          retry.textContent = "RETRY SAVE";
+          retry.onclick = () => {
+            retry.remove();
+            saveAndReview();
+          };
+          notice.append(retry);
+          console.warn("Score submission was not confirmed", e);
+        } finally {
+          submissionPending = false;
+        }
+        return saved;
+      }
+      // The distribution endpoint is read-only; the POST above only inserts a new
+      // result if the server has no entry for this player/date in either mode.
+      function renderDailyComparison(data) {
+        const score = Math.max(0, Math.min(700, state.score));
+        const total = Number(data.total);
+        if (
+          !Number.isSafeInteger(total) ||
+          total < 0 ||
+          !Array.isArray(data.bins) ||
+          data.bins.length !== 14
+        )
+          throw Error("Invalid score distribution.");
+        const bins = data.bins.map((n) => Number(n));
+        if (bins.some((n) => !Number.isSafeInteger(n) || n < 0))
+          throw Error("Invalid score distribution bins.");
+        if (packMode)
+          $("compare-eyebrow").textContent =
+            "PACK 1 SCORE DISTRIBUTION · " +
+            total +
+            " " +
+            (total === 1 ? "PLAYER" : "PLAYERS");
+        const max = Math.max(1, ...bins);
+        // The upper results metric now displays the comparison; the graph shows Best Guess.
+        $("chart-bars").innerHTML = bins
+          .map((count, i) => {
+            const height = count ? Math.max(3, (count / max) * 100) : 0;
+            const active = Math.min(13, Math.floor(score / 50)) === i;
+            const percentage = total
+              ? ((count / total) * 100).toFixed(1) + "%"
+              : "0%";
+            const desc =
+              i * 50 +
+              "–" +
+              (i === 13 ? 700 : i * 50 + 49) +
+              " points: " +
+              percentage +
+              " of recorded players";
+            return (
+              '<div class="chart-bar' +
+              (active ? " active" : "") +
+              '" style="height:' +
+              height.toFixed(2) +
+              '%" title="' +
+              desc +
+              '" aria-label="' +
+              desc +
+              '"></div>'
+            );
+          })
+          .join("");
+        const pct = (score / 700) * 100,
+          marker = $("chart-marker"),
+          label = $("chart-your-score");
+        marker.style.left = pct.toFixed(2) + "%";
+        label.textContent = "YOU · " + score;
+        label.style.transform =
+          pct < 12
+            ? "translateX(0)"
+            : pct > 88
+              ? "translateX(-100%)"
+              : "translateX(-50%)";
+        $("chart-area").setAttribute(
+          "aria-label",
+          "Recorded " +
+            (packMode ? "pack" : "daily") +
+            " score distribution with your score of " +
+            score +
+            " out of 700",
+        );
+        if (total > 0) {
+          const lower = Math.min(total, Math.max(0, Number(data.below) || 0));
+          const beat = Math.round((lower / total) * 100);
+          $("end-percentile").textContent = beat + "%";
+          $("end-percentile-tail").textContent = "OF PLAYERS";
+        } else {
+          $("end-percentile").textContent = "—";
+          $("end-percentile-tail").textContent = "NO COMPARISON YET";
+        }
+      }
+      async function loadDailyComparison() {
+        const current = ++comparisonRequestId;
+        $("end-percentile").textContent = "…";
+        $("end-percentile-tail").textContent = "OF PLAYERS";
+        try {
+          const params = new URLSearchParams({ score: String(state.score) });
+          if (packMode) params.set("pack", PACK_KEY);
+          else if (PREVIEW_DATE) params.set("date", PREVIEW_DATE);
+          const endpoint = packMode
+            ? "/api/pack-results"
+            : "/api/daily-results";
+          const response = await fetch(endpoint + "?" + params.toString(), {
+            method: "GET",
+            cache: "no-store",
+            credentials: "same-origin",
+          });
+          if (!response.ok) throw Error("Score distribution unavailable");
+          const data = await response.json();
+          if (current !== comparisonRequestId || state.phase !== "end") return;
+          renderDailyComparison(data);
+        } catch (error) {
+          if (current !== comparisonRequestId || state.phase !== "end") return;
+          $("end-percentile").textContent = "—";
+          $("end-percentile-tail").textContent = "COMPARISON UNAVAILABLE";
+          $("chart-bars").innerHTML = "";
+          $("chart-your-score").textContent = "YOU · " + state.score;
+          $("chart-marker").style.left =
+            (Math.max(0, Math.min(700, state.score)) / 7).toFixed(2) + "%";
+        }
+      }
+      // The three result actions match the public game's controls. Archived Lab
+      // completions use the existing counted archive score endpoint, once per ID/date.
+      function shareText() {
+        const day = PREVIEW_DATE || new Date().toISOString().slice(0, 10);
+        const marks = state.results
+          .map((r) => {
+            const icon =
+              r.points === 100
+                ? "🟨"
+                : r.points === 85
+                  ? "🟪"
+                  : r.points === 60
+                    ? "🟥"
+                    : r.points === 30
+                      ? "🟦"
+                      : r.points === 10
+                        ? "⬜"
+                        : "⬛";
+            return icon + " " + r.points;
+          })
+          .join(" ");
+        return (
+          (packMode
+            ? "Dashllion · Demonlists & Competitive · Pack 1"
+            : "Dashllion " + day + (ARCHIVE_MODE ? " (Archive)" : "")) +
+          "\n" +
+          state.score +
+          "/700 points\n" +
+          marks +
+          "\nhttps://dashllion.com"
+        );
+      }
+      async function copyResults() {
+        const str = shareText(),
+          btn = $("share");
+        try {
+          if (navigator.clipboard?.writeText)
+            await navigator.clipboard.writeText(str);
+          else {
+            const temp = document.createElement("textarea");
+            temp.value = str;
+            temp.style.position = "fixed";
+            temp.style.opacity = "0";
+            document.body.appendChild(temp);
+            temp.select();
+            if (!document.execCommand("copy"))
+              throw Error("Clipboard unavailable");
+            temp.remove();
+          }
+          btn.textContent = "✓ COPIED";
+          setTimeout(() => {
+            btn.textContent = "↗ COPY RESULTS";
+          }, 1700);
+        } catch {
+          window.prompt("Copy your results:", str);
+        }
+      }
+      async function toggleArchive(source = "end") {
+        const prefix = source === "home" ? "home-" : "";
+        const panel = $(prefix + "archive-panel"),
+          button = $(prefix + "archive-toggle");
+        const status = $(prefix + "archive-status"),
+          grid = $(prefix + "archive-dates");
+        const opening = panel.classList.contains("hidden");
+        panel.classList.toggle("hidden", !opening);
+        button.setAttribute("aria-expanded", String(opening));
+        if (!opening) return;
+        status.textContent = "Checking available daily games…";
+        grid.replaceChildren();
+        try {
+          const [access, response] = await Promise.all([
+            fetchRunStatus(),
+            fetch("/api/archive-days", {
+              method: "GET",
+              cache: "no-store",
+              credentials: "same-origin",
+            }),
+          ]);
+          if (!response.ok) throw Error("Archive unavailable");
+          const data = await response.json();
+          if (!Array.isArray(data.days) || data.days.length !== 7)
+            throw Error("Invalid archive data");
+          const todayDate = access.today;
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(todayDate))
+            throw Error("Invalid current day");
+          // Include today in the picker, especially when viewing an archive.
+          const todayTile = document.createElement("button");
+          todayTile.type = "button";
+          todayTile.className = "archive-day";
+          const onToday = !ARCHIVE_MODE && runDate() === todayDate;
+          const todayCompleted =
+            access.daily?.completed === true || locallyCompleted(todayDate);
+          if (todayCompleted) todayTile.classList.add("completed");
+          todayTile.disabled = onToday;
+          const todayLabel = document.createElement("strong");
+          todayLabel.textContent =
+            "TODAY · " +
+            new Intl.DateTimeFormat("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+              timeZone: "UTC",
+            }).format(new Date(todayDate + "T12:00:00Z"));
+          const todayDetail = document.createElement("small");
+          todayDetail.textContent = onToday
+            ? "Current day"
+            : todayCompleted
+              ? "See daily results"
+              : "Go to today’s run";
+          todayTile.append(todayLabel, todayDetail);
+          if (!onToday)
+            todayTile.addEventListener("click", () =>
+              window.location.assign("/"),
+            );
+          grid.appendChild(todayTile);
+          for (const entry of data.days) {
+            if (
+              !entry ||
+              typeof entry.date !== "string" ||
+              !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)
+            )
+              continue;
+            const date = entry.date,
+              available = entry.available === true;
+            const record = access.archives?.[date];
+            const completed =
+              record?.completed === true || locallyCompleted(date);
+            const localScore = savedCompletion(date)?.score;
+            const score = Number.isFinite(record?.score)
+              ? record.score
+              : Number.isFinite(localScore)
+                ? localScore
+                : null;
+            const tile = document.createElement("button");
+            tile.type = "button";
+            tile.className = "archive-day";
+            if (completed) tile.classList.add("completed");
+            tile.disabled = !available || (ARCHIVE_MODE && date === runDate());
+            const label = document.createElement("strong");
+            label.textContent = new Intl.DateTimeFormat("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+              timeZone: "UTC",
+            }).format(new Date(date + "T12:00:00Z"));
+            const detail = document.createElement("small");
+            detail.textContent = !available
+              ? "Not available"
+              : ARCHIVE_MODE && date === runDate()
+                ? "Current archived day"
+                : completed
+                  ? "See results" +
+                    (score === null ? "" : " · " + score + "/700")
+                  : "Begin archived run";
+            tile.append(label, detail);
+            if (!tile.disabled)
+              tile.addEventListener("click", () =>
+                window.location.assign(
+                  "/archive?date=" + encodeURIComponent(date),
+                ),
+              );
+            grid.appendChild(tile);
+          }
+          status.textContent = data.days.some((d) => d.available)
+            ? ""
+            : "No previous daily games are available yet.";
+        } catch {
+          status.textContent =
+            "Could not verify daily run status. Close and reopen to retry.";
+        }
+      }
+      function goHome() {
+        if (DESIGN_LAB_MODE) {
+          returnLabHome();
+          return;
+        }
+        window.location.assign(CLEAN_MODE ? "/admin/clean-game" : "/");
+      }
+      function getAnswers(i, query) {
+        const q = state.deck[i],
+          key = answerKey(query || "");
+        return [...(q.answers || [])]
+          .filter(
+            (a) =>
+              !key || answerNames(q, a).some((x) => answerKey(x).includes(key)),
+          )
+          .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+      }
+      function answerRow(a, result, question) {
+        const [rarity, color] = tierDefs[a.points] || ["UNKNOWN", "#e7edf3"];
+        const mine = !!result.points && a.name === result.name;
+        const golden =
+          a.points === 100 && question.golden_note
+            ? '<small class="golden-note">' +
+              escapeHtml(question.golden_note) +
+              "</small>"
+            : "";
+        return (
+          '<div class="answer' +
+          (mine ? " mine" : "") +
+          '">' +
+          '<div class="answer-title">' +
+          escapeHtml(a.name) +
+          (mine ? '<small class="you-label">★ YOUR ANSWER</small>' : "") +
+          golden +
+          "</div>" +
+          '<div class="answer-tier" style="color:' +
+          color +
+          '">' +
+          rarity +
+          "</div>" +
+          '<strong class="answer-score" style="color:' +
+          color +
+          '">' +
+          a.points +
+          "</strong></div>"
+        );
+      }
+      function fillAnswers(i, append) {
+        const scope = document.querySelector('[data-topic="' + i + '"]'),
+          term = scope.querySelector("[data-search]").value,
+          grid = scope.querySelector("[data-answers]"),
+          more = scope.querySelector("[data-more]");
+        const matches = getAnswers(i, term),
+          offset = append ? Number(more.dataset.offset) || 0 : 0,
+          end = Math.min(offset + 120, matches.length);
+        const html = matches
+          .slice(offset, end)
+          .map((a) => answerRow(a, state.results[i], state.deck[i]))
+          .join("");
+        if (append) grid.insertAdjacentHTML("beforeend", html);
+        else grid.innerHTML = html || '<div class="topic-sub">NO MATCHES</div>';
+        more.dataset.offset = String(end);
+        more.classList.toggle("hidden", end >= matches.length);
+        more.textContent =
+          "SHOW " +
+          Math.min(120, matches.length - end) +
+          " MORE / " +
+          (matches.length - end) +
+          " REMAINING →";
+      }
+      $("end-topics").addEventListener("input", (ev) => {
+        const input = ev.target.closest("[data-search]");
+        if (input) fillAnswers(Number(input.dataset.search), false);
+      });
+      $("end-topics").addEventListener("click", (ev) => {
+        const b = ev.target.closest("[data-more]");
+        if (b) fillAnswers(Number(b.dataset.more), true);
+      });
+      $("start").addEventListener("click", handleStart);
+      $("packs-entry").addEventListener("click", openPackCategories);
+      $("end-packs-entry").addEventListener("click", openPackCategories);
+      $("packs-category-demonlists").addEventListener("click", openPackList);
+      $("packs-first-pack").addEventListener("click", showPackDetail);
+      $("packs-back-home").addEventListener("click", returnLabHome);
+      $("packs-back-categories").addEventListener("click", openPackCategories);
+      $("pack-detail-back").addEventListener("click", openPackList);
+      $("pack-begin").addEventListener("click", handlePackBegin);
+      $("end-packs-back").addEventListener("click", openPackList);
+      $("home-archive-toggle").addEventListener("click", () =>
+        toggleArchive("home"),
+      );
+      $("archive-toggle").addEventListener("click", () => toggleArchive("end"));
+      $("share").addEventListener("click", copyResults);
+      $("home-btn").addEventListener("click", goHome);
+
+      $("answer-form").addEventListener("submit", submit);
+      $("next").addEventListener("click", next);
+      document.addEventListener("keydown", (ev) => {
+        if (
+          ev.key === "Enter" &&
+          state.phase === "play" &&
+          state.canAdvance &&
+          !$("next").disabled &&
+          !ev.repeat &&
+          !ev.ctrlKey &&
+          !ev.altKey &&
+          !ev.metaKey
+        ) {
+          ev.preventDefault();
+          next();
+        }
+      });
+      $("answer-input").addEventListener("input", clearAnswerFeedback);
+      // Procedural world: no art assets, network calls, or pre-rendered panels.
+      const canvas = $("world"),
+        ctx = canvas.getContext("2d", { alpha: false });
+      let W = innerWidth,
+        H = innerHeight,
+        dpr = 1,
+        last = performance.now();
+      function resize() {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      window.addEventListener("resize", resize, { passive: true });
+      resize();
+      // Do not allow starting a counted game until completion status is checked.
+      prepareRunAccess();
+      const hash = (n) => {
+        const a = Math.sin(n * 127.1 + 86.73) * 43758.5453;
+        return a - Math.floor(a);
+      };
+      function spawnJumpDust(now, meters, count) {
+        const origin = worldXForMeters(meters);
+        for (let k = 0; k < count; k++) {
+          const seed = now * 0.13 + k * 19.7;
+          state.particles.push({
+            x: origin + (hash(seed + 17) - 0.5) * 21,
+            y: 0,
+            vx: (hash(seed + 35) - 0.5) * 160,
+            vy: -35 - hash(seed + 49) * 120,
+            birth: now,
+            life: 340 + hash(seed + 97) * 360,
+          });
+        }
+      }
+      function jumpStep(now) {
+        if (state.returning) {
+          const r = state.returning;
+          const t = Math.max(0, Math.min(1, (now - r.start) / r.duration));
+          const ease = smootherstep(t);
+          // The same position used for the cube also drives the descending
+          // meter, so the counter smoothly reaches zero at the launch point.
+          state.travel = r.from * (1 - ease);
+          state.camera = r.cameraFrom * (1 - ease);
+          $("distance-meter").textContent = fmt(state.travel);
+          if (t >= 1) {
+            state.travel = 0;
+            state.camera = 0;
+            state.returning = null;
+            $("distance-meter").textContent = fmt(0);
+            state.round++;
+            loadRound();
+          }
+          return {
+            dy: 0,
+            spin: 0,
+            scaleX: 1,
+            scaleY: 1,
+            returning: true,
+            phase: "return",
+          };
+        }
+        const j = state.jump;
+        if (!j)
+          return {
+            dy: 0,
+            spin: 0,
+            scaleX: 1,
+            scaleY: 1,
+            returning: false,
+            phase: "idle",
+          };
+        const elapsed = Math.max(0, now - j.start);
+        const base = { returning: false };
+        if (elapsed < j.windup) {
+          // Compress against the runway before takeoff; no ground sliding.
+          const charge = smootherstep(elapsed / j.windup);
+          state.travel = 0;
+          $("distance-meter").textContent = fmt(0);
+          return {
+            ...base,
+            dy: 0,
+            spin: 0,
+            scaleX: 1 + 0.14 * charge,
+            scaleY: 1 - 0.14 * charge,
+            phase: "takeoff",
+          };
+        }
+        if (!j.launched) {
+          j.launched = true;
+          spawnJumpDust(now, 0, 8);
+        }
+        const flightEnd = j.windup + j.flight;
+        if (elapsed < flightEnd) {
+          const u = Math.max(0, Math.min(1, (elapsed - j.windup) / j.flight));
+          // Fast takeoff, sustained forward momentum, smooth approach.
+          // Unlike a smoothstep translation, the cube moves forward immediately
+          // while following a genuine ballistic (parabolic) jump arc.
+          const forward = u - 0.045 * Math.sin(2 * Math.PI * u);
+          state.travel = j.from + (j.to - j.from) * forward;
+          const height = 132 + Math.min(125, j.points * 1.24);
+          const dy = 4 * height * u * (1 - u);
+          const launchStretch = Math.max(0, 1 - u / 0.13);
+          const spin = Math.PI * 2 * smootherstep(u);
+          $("distance-meter").textContent = fmt(state.travel);
+          return {
+            ...base,
+            dy,
+            spin,
+            scaleX: 1 - 0.1 * launchStretch,
+            scaleY: 1 + 0.13 * launchStretch,
+            phase: "flight",
+          };
+        }
+        state.travel = j.to;
+        $("distance-meter").textContent = fmt(j.to);
+        if (!j.landed) {
+          j.landed = true;
+          spawnJumpDust(now, j.to, 13);
+          if (state.round !== 6) sound.play("land", j.points);
+        }
+        const impactProgress = Math.min(1, (elapsed - flightEnd) / j.impact);
+        if (impactProgress < 1) {
+          // Squash into the ground, rebound a few pixels, then settle upright.
+          const settle = 1 - smootherstep(impactProgress);
+          const rebound =
+            8 *
+            Math.sin(Math.PI * impactProgress) *
+            Math.pow(1 - impactProgress, 1.5);
+          return {
+            ...base,
+            dy: rebound,
+            spin: 0,
+            scaleX: 1 + 0.19 * settle,
+            scaleY: 1 - 0.17 * settle,
+            phase: "impact",
+          };
+        }
+        state.jump = null;
+        $("next").disabled = false;
+        return {
+          ...base,
+          dy: 0,
+          spin: 0,
+          scaleX: 1,
+          scaleY: 1,
+          phase: "landed",
+        };
+      }
+
+      function draw(now) {
+        requestAnimationFrame(draw);
+        if (document.hidden) return;
+        const step = Math.max(0, Math.min(0.04, (now - last) / 1000));
+        last = now;
+        // Continuous palette blending, including when the next question starts.
+        const targetGold =
+          state.goldenVisible && state.phase === "play" ? 1 : 0;
+        state.goldGlow +=
+          (targetGold - state.goldGlow) * (1 - Math.exp(-3.6 * step));
+        // Fast fade-in, hold through landing, then smooth fade-out while
+        // the cube is returning to the launch point.
+        const targetDeep =
+          state.deepCutActive && state.phase === "play" ? 1 : 0;
+        state.deepCutGlow +=
+          (targetDeep - state.deepCutGlow) *
+          (1 - Math.exp(-(targetDeep ? 10 : 8) * step));
+        const gold = state.goldGlow;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, mixRgb("051724", "362110", gold));
+        sky.addColorStop(0.48, mixRgb("132d43", "6b411e", gold));
+        sky.addColorStop(0.79, mixRgb("264356", "8b5c29", gold));
+        sky.addColorStop(1, mixRgb("09141c", "24160e", gold));
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, H);
+        const topH = H * 0.21,
+          horizon = H * 0.72;
+        // Atmospheric horizontal light, distinct from the reference game's sea.
+        const light = ctx.createRadialGradient(
+          W * 0.68,
+          H * 0.42,
+          15,
+          W * 0.68,
+          H * 0.42,
+          Math.max(W * 0.5, H * 0.7),
+        );
+        light.addColorStop(
+          0,
+          mixRgba("24bac3", "ffd163", gold, 0.125 + gold * 0.15),
+        );
+        light.addColorStop(
+          0.5,
+          mixRgba("7d67b3", "ff9d3a", gold, 0.07 + gold * 0.09),
+        );
+        light.addColorStop(1, "#11202b00");
+        ctx.fillStyle = light;
+        ctx.fillRect(0, 0, W, H);
+        for (let k = 0; k < 170; k++) {
+          const x = hash(k * 5 + 11) * W,
+            y = hash(k * 11 + 93) * H * 0.63,
+            size = k % 13 === 0 ? 3 : 1,
+            alpha = 0.12 + hash(k + 81) * 0.47;
+          ctx.fillStyle = "rgba(193,247,241," + alpha + ")";
+          ctx.fillRect(Math.floor(x), Math.floor(y), size, size);
+        }
+        // Low-contrast striped orbit ring and a faceted coral satellite.
+        const cx = W * 0.79,
+          cy = H * 0.275,
+          rad = Math.min(W * 0.075, 64);
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-0.24);
+        ctx.strokeStyle = "#f0a5b34f";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rad * 2.1, rad * 0.43, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = "#fb9b8c";
+        ctx.beginPath();
+        ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#ef718a70";
+        ctx.fillRect(cx - rad * 0.7, cy - 6, rad * 0.8, 13);
+        ctx.fillStyle = "#ffc2a480";
+        ctx.fillRect(cx + rad * 0.15, cy - rad * 0.3, rad * 0.3, rad * 0.2);
+        const animation = jumpStep(now);
+        if (!animation.returning) {
+          // Let the cube visibly traverse the scene before the camera follows.
+          // Mobile framing leads sooner to keep the jump inside the viewport.
+          const followFraction = W < 600 ? 0.47 : 0.67;
+          const cameraTarget = Math.max(
+            0,
+            126 + worldXForMeters(state.travel) - W * followFraction,
+          );
+          state.camera +=
+            (cameraTarget - state.camera) *
+            (1 - Math.exp(-(W < 600 ? 18 : 11) * step));
+          const cubeWorldX = 126 + worldXForMeters(state.travel);
+          state.camera = Math.max(state.camera, cubeWorldX - (W - 47));
+        }
+        // Parallax ridgelines.
+        for (const [layer, height, color, shift] of [
+          [0, H * 0.61, mixRgb("142b42", "50341c", gold), 0.07],
+          [1, H * 0.665, mixRgb("102539", "402919", gold), 0.14],
+          [2, H * 0.713, mixRgb("10212e", "36251a", gold), 0.23],
+        ]) {
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(0, H);
+          for (let x = -30; x <= W + 45; x += 25) {
+            const world = x + state.camera * shift;
+            const jag =
+              16 * Math.sin(world * 0.008 + layer * 0.9) +
+              23 * Math.sin(world * 0.021 + layer * 1.7) +
+              12 * Math.sin(world * 0.044 + layer);
+            ctx.lineTo(x, height + jag);
+          }
+          ctx.lineTo(W, H);
+          ctx.fill();
+        }
+        // Draw the terrain as a long, scrolling illuminated runway.
+        ctx.fillStyle = mixRgb("091b27", "261a12", gold);
+        ctx.fillRect(0, horizon + 10, W, H - horizon - 10);
+        ctx.fillStyle = mixRgb("133342", "503822", gold);
+        ctx.fillRect(0, horizon + 13, W, 8);
+        ctx.fillStyle = mixRgb("69ebc3", "ffd279", gold);
+        ctx.fillRect(0, horizon + 6, W, 2);
+        ctx.fillStyle = "#a5f2d12b";
+        ctx.fillRect(0, horizon + 9, W, 13);
+        for (let x = -((state.camera * 0.58) % 85); x < W; x += 85) {
+          ctx.fillStyle = "#61b5bf45";
+          ctx.fillRect(x, horizon + 31, 1, H - horizon - 32);
+          ctx.fillStyle = "#4d96a747";
+          ctx.fillRect(x + 20, horizon + 31, 38, 2);
+        }
+        for (let i = 0; i < 25; i++) {
+          const x = i * 160 - ((state.camera * 0.58) % 160);
+          ctx.fillStyle = i % 4 === 0 ? "#a9fcbb88" : "#79c6cb50";
+          ctx.fillRect(Math.floor(x), horizon + 2, 10, 4);
+          if (i % 3 === 0) {
+            ctx.fillStyle = "#72e8da1a";
+            ctx.fillRect(Math.floor(x + 20), horizon + 31, 14, 18);
+          }
+        }
+        // Four fixed rarity checkpoints, precisely placed at 100/300/600/850m.
+        // The 100-point checkpoint at 1000m appears only when the player actually
+        // lands a golden answer; it cannot spoil a possible 100-point answer.
+        const markers = state.goldenVisible
+          ? [...visibleCheckpoints, 100]
+          : visibleCheckpoints;
+        for (const points of markers) {
+          const x =
+            126 + worldXForMeters(metersForPoints(points)) - state.camera;
+          if (x < -80 || x > W + 80) continue;
+          const color = tierDefs[points][1],
+            gold = points === 100;
+          const top = horizon - (gold ? 102 : 86);
+          ctx.save();
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.75;
+          ctx.setLineDash([3, 5]);
+          ctx.beginPath();
+          ctx.moveTo(x, top + 35);
+          ctx.lineTo(x, horizon + 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.globalAlpha = 0.95;
+          ctx.fillStyle = "#092331";
+          ctx.fillRect(x - 24, top, 48, 34);
+          ctx.strokeStyle = color;
+          ctx.strokeRect(x - 24, top, 48, 34);
+          ctx.fillStyle = color;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.font = '900 24px "Barlow Condensed",Impact,sans-serif';
+          ctx.fillText(String(points), x, top + 15);
+          ctx.font = '10px "DM Mono",monospace';
+          ctx.fillText("PTS", x, top + 29);
+          ctx.fillRect(x - 8, horizon + 1, 16, 4);
+          ctx.restore();
+        }
+
+        const groundY = horizon + 6,
+          px = 126 + worldXForMeters(state.travel) - state.camera;
+        const spin =
+          state.phase === "home" && !state.jump
+            ? Math.sin(now * 0.001) * 0.08
+            : animation.spin;
+        const lift =
+          state.phase === "home" && !state.jump
+            ? Math.abs(Math.sin(now * 0.002)) * 2
+            : animation.dy;
+        const scaleX = animation.scaleX ?? 1,
+          scaleY = animation.scaleY ?? 1;
+        // Exact footprint of the rotating/squashing cube stays above ground.
+        const footprint =
+          23 *
+          (Math.abs(Math.sin(spin)) * scaleX +
+            Math.abs(Math.cos(spin)) * scaleY);
+        const py = groundY - footprint - 2 - lift;
+        // A single barely-visible trailing line suggests the quick retrieval.
+        if (animation.returning) {
+          ctx.save();
+          ctx.strokeStyle = "rgba(135,214,220,0.14)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(px + 26, py + 9);
+          ctx.lineTo(px + 46, py + 9);
+          ctx.stroke();
+          ctx.restore();
+        }
+        // A fixed ground shadow makes both takeoff and landing visually readable.
+        ctx.fillStyle =
+          "rgba(0,12,21," +
+          (0.22 + 0.24 * Math.max(0, 1 - lift / 170)).toFixed(3) +
+          ")";
+        ctx.beginPath();
+        ctx.ellipse(
+          px,
+          groundY + 5,
+          Math.max(9, 24 - lift * 0.07),
+          4,
+          0,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+        drawCube(px, py, spin, now, scaleX, scaleY);
+        // Jump afterimage and landing fragments.
+        state.particles = state.particles.filter((p) => now - p.birth < p.life);
+        for (const p of state.particles) {
+          p.x += p.vx * step;
+          p.y += p.vy * step;
+          p.vy += 230 * step;
+          const opacity = Math.max(0, 1 - (now - p.birth) / p.life);
+          ctx.globalAlpha = opacity * 0.75;
+          ctx.fillStyle = "#bafddd";
+          ctx.fillRect(126 + p.x - state.camera, groundY + p.y, 3.5, 3.5);
+        }
+        ctx.globalAlpha = 1;
+        // Deep Cut: a soft, animated cobalt spotlight follows the airborne cube.
+        // The surrounding world falls into shadow, but its center and the cube
+        // stay visible. Fade back out before impact so the result is legible.
+        const deep = deepCutSpotlight();
+        if (deep > 0.001) {
+          ctx.save();
+          // Close, high-contrast spotlight anchored to the cube even while
+          // returning. Outer darkness is nearly opaque at full intensity.
+          const radius = Math.max(170, Math.min(250, W * 0.23));
+          const dim = ctx.createRadialGradient(px, py, 27, px, py, radius);
+          dim.addColorStop(0, "rgba(0,3,15,0)");
+          dim.addColorStop(0.18, "rgba(0,3,15," + deep * 0.12 + ")");
+          dim.addColorStop(0.4, "rgba(0,3,15," + deep * 0.83 + ")");
+          dim.addColorStop(0.72, "rgba(0,2,12," + deep * 0.97 + ")");
+          dim.addColorStop(1, "rgba(0,2,12," + deep * 0.995 + ")");
+          ctx.fillStyle = dim;
+          ctx.fillRect(0, 0, W, H);
+          const halo = ctx.createRadialGradient(
+            px,
+            py,
+            15,
+            px,
+            py,
+            Math.min(135, radius * 0.68),
+          );
+          halo.addColorStop(0, "rgba(45,129,245," + deep * 0.18 + ")");
+          halo.addColorStop(1, "rgba(45,129,245,0)");
+          ctx.fillStyle = halo;
+          ctx.fillRect(0, 0, W, H);
+          ctx.restore();
+        }
+        // World boundary and art-directed distance line.
+        ctx.fillStyle = "#c4eef10e";
+        ctx.fillRect(0, H - 18, W, 1);
+        ctx.fillStyle = "#84c8cb78";
+        ctx.fillRect(
+          0,
+          H - 18,
+          Math.max(0, Math.min(W, (state.score / 700) * W)),
+          2,
+        );
+      }
+      // Keep the preview cube visually identical to the existing live-game cube.
+      function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, r);
+      }
+      function drawCube(x, y, angle, now, scaleX = 1, scaleY = 1) {
+        // RobTop-style cube: gold-orange face, cyan eyes and mouth, bold black frame.
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.scale(scaleX, scaleY);
+        // A restrained cyan rim light ties the icon into the neon landscape.
+        ctx.shadowColor = "#42e8ef";
+        ctx.shadowBlur = 9;
+        ctx.fillStyle = "#070c12";
+        roundRect(-23, -23, 46, 46, 2.5);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        const body = ctx.createLinearGradient(0, -21, 0, 21);
+        body.addColorStop(0, "#fff000");
+        body.addColorStop(0.43, "#ffcb00");
+        body.addColorStop(1, "#ff8500");
+        ctx.fillStyle = body;
+        roundRect(-21, -21, 42, 42, 1.1);
+        ctx.fill();
+        // Subtle curved two-tone shading, matching the reference icon.
+        ctx.save();
+        roundRect(-21, -21, 42, 42, 1.1);
+        ctx.clip();
+        ctx.beginPath();
+        ctx.moveTo(-21, -3);
+        ctx.quadraticCurveTo(0, 2, 21, -3);
+        ctx.lineTo(21, 21);
+        ctx.lineTo(-21, 21);
+        ctx.closePath();
+        const lower = ctx.createLinearGradient(0, -3, 0, 21);
+        lower.addColorStop(0, "#ffb600");
+        lower.addColorStop(1, "#ff7900");
+        ctx.fillStyle = lower;
+        ctx.fill();
+        const sheen = ctx.createLinearGradient(0, -21, 0, -16);
+        sheen.addColorStop(0, "#fffca4bb");
+        sheen.addColorStop(1, "#fffca400");
+        ctx.fillStyle = sheen;
+        ctx.fillRect(-21, -21, 42, 5);
+        ctx.restore();
+        // Reference proportions: two square eyes and one wide, rectangular mouth.
+        ctx.fillStyle = "#080909";
+        ctx.fillRect(-12.2, -13.8, 9.2, 9.4);
+        ctx.fillRect(3.1, -13.8, 9.2, 9.4);
+        ctx.fillRect(-14.8, -0.2, 29.6, 8.8);
+        const face = ctx.createLinearGradient(0, -12, 0, 8);
+        face.addColorStop(0, "#00f4ff");
+        face.addColorStop(1, "#03d9ef");
+        ctx.fillStyle = face;
+        ctx.fillRect(-10.55, -12.15, 5.9, 6.1);
+        ctx.fillRect(4.75, -12.15, 5.9, 6.1);
+        ctx.fillRect(-13.1, 1.5, 26.2, 5.4);
+        ctx.restore();
+      }
+
+      const feedbackDialog = $("feedback-dialog"),
+        feedbackMessage = $("feedback-message"),
+        feedbackSave = $("feedback-save"),
+        feedbackStatus = $("feedback-status");
+      let feedbackBusy = false,
+        feedbackLoaded = false,
+        feedbackExists = false;
+      function feedbackCount() {
+        $("feedback-count").textContent =
+          feedbackMessage.value.length + " / 2000";
+      }
+      function feedbackState(message, bad = false) {
+        feedbackStatus.textContent = message;
+        feedbackStatus.style.color = bad ? "#ff8197" : "#baff70";
+      }
+      async function openFeedback() {
+        if (feedbackDialog.open) return;
+        feedbackDialog.showModal();
+        feedbackMessage.value = "";
+        feedbackCount();
+        feedbackLoaded = false;
+        feedbackExists = false;
+        feedbackMessage.disabled = true;
+        feedbackSave.disabled = true;
+        feedbackSave.textContent = "Send feedback";
+        feedbackState("Loading your message…");
+        try {
+          const r = await fetch("/api/feedback", {
+              cache: "no-store",
+              credentials: "same-origin",
+            }),
+            data = await r.json();
+          if (!r.ok) throw Error(data.error || "Could not load feedback.");
+          if (!feedbackDialog.open) return;
+          feedbackExists = !!data.feedback;
+          feedbackMessage.value = data.feedback?.message || "";
+          feedbackLoaded = true;
+          feedbackSave.textContent = feedbackExists
+            ? "Update feedback"
+            : "Send feedback";
+          feedbackState(
+            feedbackExists ? "Your existing message is ready to edit." : "",
+          );
+          feedbackCount();
+          feedbackMessage.disabled = false;
+          feedbackSave.disabled = false;
+          feedbackMessage.focus();
+        } catch (e) {
+          feedbackState(e.message + " Close and reopen to retry.", true);
+        }
+      }
+      $("feedback-open").addEventListener("click", openFeedback);
+      $("feedback-close").addEventListener("click", () => {
+        if (!feedbackBusy) feedbackDialog.close();
+      });
+      feedbackDialog.addEventListener("cancel", (ev) => {
+        if (feedbackBusy) ev.preventDefault();
+      });
+      feedbackMessage.addEventListener("input", feedbackCount);
+      $("feedback-form").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        if (feedbackBusy || !feedbackLoaded) return;
+        const message = feedbackMessage.value.trim();
+        if (!message) {
+          feedbackState("Please enter a message.", true);
+          return;
+        }
+        feedbackBusy = true;
+        feedbackSave.disabled = true;
+        feedbackMessage.disabled = true;
+        $("feedback-close").disabled = true;
+        feedbackState("Saving…");
+        try {
+          const r = await fetch("/api/feedback", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Dashllion-Feedback": "1",
+              },
+              credentials: "same-origin",
+              body: JSON.stringify({ message }),
+            }),
+            data = await r.json();
+          if (!r.ok) throw Error(data.error || "Could not save feedback.");
+          feedbackMessage.value = data.feedback.message;
+          feedbackCount();
+          feedbackState(
+            feedbackExists
+              ? "Feedback updated. Thank you!"
+              : "Feedback sent. Thank you!",
+          );
+          feedbackExists = true;
+          feedbackSave.textContent = "Update feedback";
+        } catch (e) {
+          feedbackState(e.message, true);
+        } finally {
+          feedbackBusy = false;
+          feedbackSave.disabled = false;
+          feedbackMessage.disabled = false;
+          $("feedback-close").disabled = false;
+        }
+      });
+      // Unlock audio only after user interaction. No external files or background music.
+      document.addEventListener("pointerdown", sound.tryWelcome, {
+        capture: true,
+        passive: true,
+      });
+      document.addEventListener("keydown", sound.tryWelcome, { capture: true });
+      sound.tryWelcome();
+      requestAnimationFrame(draw);
+    </script>
+  </body>
+</html>
